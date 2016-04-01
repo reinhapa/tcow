@@ -5,6 +5,7 @@ import static com.sun.mail.smtp.SMTPMessage.NOTIFY_FAILURE;
 import static com.sun.mail.smtp.SMTPMessage.NOTIFY_SUCCESS;
 import static com.sun.mail.smtp.SMTPMessage.RETURN_HDRS;
 import static java.lang.String.format;
+import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.newOutputStream;
 import static java.nio.file.Files.readAllBytes;
@@ -102,7 +103,7 @@ public class Billing implements AutoCloseable {
 		sender = new InternetAddress("patrick@reini.net", "Patrick Reinhart");
 		replacementPattern = Pattern.compile("\\$\\{([\\w]+)\\}");
 		pdfCopy = new PdfCopyFields(
-				newOutputStream(dataDir.resolve(RECHNUNG + "Printer.pdf")));
+				newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf")));
 	}
 
 	@Override
@@ -124,9 +125,10 @@ public class Billing implements AutoCloseable {
 		String vornameEinzeln = vorname.replaceFirst(" & .+", "").concat(",");
 		String postAdresse = format("%s\n%s %s\n%s\n%s %s", anrede, vorname,
 				nachname, strasse, plz, ort);
+		String bezahltDatum = get("Bezahlt", row);
 		try {
 			PdfReader pfdReader = createReader(typ);
-			Path pdfFile = dataDir
+			Path pdfFile = createDirectories(dataDir.resolve(RECHNUNG + "en"))
 					.resolve(format("%s_%s_%s.pdf", RECHNUNG, vorname, nachname)
 							.replace(' ', '_'));
 			logger.info("Creating PDF {}", pdfFile);
@@ -198,13 +200,15 @@ public class Billing implements AutoCloseable {
 		String email = get("Email", row);
 		String vorname = get("Vorname", row);
 		String nachname = get("Name", row);
+		String emailBody = getEmailBody(row);
+
 		InternetAddress recipient = new InternetAddress(email,
 				format("%s %s", vorname, nachname));
 		logger.info("Sending document to {}", recipient);
 		Multipart mp = new MimeMultipart();
 
 		MimeBodyPart htmlPart = new MimeBodyPart();
-		htmlPart.setText(getEmailBody(row), "ISO-8859-1");
+		htmlPart.setText(emailBody, "ISO-8859-1");
 
 		mp.addBodyPart(htmlPart);
 
@@ -229,12 +233,19 @@ public class Billing implements AutoCloseable {
 
 	String getEmailBody(Map<String, String> row) throws IOException {
 		try (InputStream in = getClass()
-				.getResourceAsStream("/BillingEmailTemplate.txt")) {
+				.getResourceAsStream(getEmailResource(row))) {
 			return new BufferedReader(
 					new InputStreamReader(in, StandardCharsets.UTF_8)).lines()
 							.map(line -> mapReplacements(line, row))
 							.collect(Collectors.joining("\n"));
 		}
+	}
+
+	private String getEmailResource(Map<String, String> row) {
+		if (get("Bezahlt", row).isEmpty()) {
+			return "/BillingEmailTemplate.txt";
+		}
+		return "/BillPayedEmailTemplate.txt";
 	}
 
 	String mapReplacements(String input, Map<String, String> row) {

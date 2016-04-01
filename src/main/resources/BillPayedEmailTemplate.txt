@@ -1,0 +1,10 @@
+Hallo ${Vorname},
+
+Im Anhang findest Du die Rechnung für ein TCOW ${Bezeichnung} für
+das Jahr ${Jahr1} den Du bereits am ${Bezahlt} bezahlt hast.
+
+Freundliche Grüsse
+
+Patrick Reinhart
+
+Kassier Tauchclub Obwalden
