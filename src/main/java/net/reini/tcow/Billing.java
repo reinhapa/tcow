@@ -11,6 +11,7 @@ import static java.nio.file.Files.newOutputStream;
 import static java.nio.file.Files.readAllBytes;
 import static java.time.format.DateTimeFormatter.ofPattern;
 
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,7 +50,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.AcroFields;
+import com.lowagie.text.pdf.ColumnText;
+import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfCopyFields;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfStamper;
@@ -125,7 +130,7 @@ public class Billing implements AutoCloseable {
 		String vornameEinzeln = vorname.replaceFirst(" & .+", "").concat(",");
 		String postAdresse = format("%s\n%s %s\n%s\n%s %s", anrede, vorname,
 				nachname, strasse, plz, ort);
-		String bezahltDatum = get("Bezahlt", row);
+		String bezahltAm = get("Bezahlt", row);
 		try {
 			PdfReader pfdReader = createReader(typ);
 			Path pdfFile = createDirectories(dataDir.resolve(RECHNUNG + "en"))
@@ -142,6 +147,14 @@ public class Billing implements AutoCloseable {
 			form.setField("Datum", date.format(dateFormatter));
 			form.setField("Bezeichnung", bezeichnung);
 			form.setField("Betrag", betrag);
+			if (!bezahltAm.isEmpty()) {
+				PdfContentByte canvas = pdfStamper.getOverContent(1);
+				Phrase phrase = new Phrase(
+						format("Betrag erhalten am %s", bezahltAm));
+				phrase.getFont().setColor(Color.BLUE);
+				ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT, phrase,
+						380, 50, 10);
+			}
 			pdfStamper.close();
 			if (email.isEmpty()) {
 				try (InputStream in = newInputStream(pdfFile)) {
