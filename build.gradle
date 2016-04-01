@@ -1,0 +1,23 @@
+apply plugin: 'java'
+
+repositories {
+    jcenter()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'net.reini.tcow.Billing'
+    }
+}
+
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.14'
+    compile 'com.lowagie:itext:4.2.1'
+    compile 'org.jopendocument:jOpenDocument:1.3'
+    compile 'com.sun.mail:javax.mail:1.5.5'
+    
+    runtime 'ch.qos.logback:logback-classic:1.1.6'
+    runtime 'ch.qos.logback:logback-core:1.1.6'
+    
+    testCompile 'junit:junit:4.12'
+}

@@ -1,0 +1,17 @@
+Hallo ${Vorname},
+
+Im Anhang findest Du die Rechnung des TCOW Jahresbeitrags ${Jahr1}.
+
+Bitte überweise den Betrag von CHF ${Betrag} bis zum Ende dieses Monats auf das folgende Konto:
+
+Raiffeisen Region Stans
+
+IBAN/Konto-Nr.: CH02 8122 3000 0092 8375 2
+Kontoinhaber:   Tauchclub Obwalden
+
+
+Freundliche Grüsse
+
+Patrick Reinhart
+
+Kassier Tauchclub Obwalden
