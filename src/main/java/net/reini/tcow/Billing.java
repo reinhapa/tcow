@@ -1,11 +1,10 @@
 package net.reini.tcow;
 
-import static com.sun.mail.smtp.SMTPMessage.NOTIFY_DELAY;
 import static com.sun.mail.smtp.SMTPMessage.NOTIFY_FAILURE;
-import static com.sun.mail.smtp.SMTPMessage.NOTIFY_SUCCESS;
 import static com.sun.mail.smtp.SMTPMessage.RETURN_HDRS;
 import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.newOutputStream;
 import static java.nio.file.Files.readAllBytes;
@@ -40,8 +39,10 @@ import java.util.stream.Collectors;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
+import javax.mail.Authenticator;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -110,11 +111,27 @@ public class Billing implements AutoCloseable {
 		date = LocalDateTime.now();
 		dateFormatter = ofPattern("dd. MMMM yyyy", Locale.GERMAN);
 		yearFormatter = ofPattern("yyyy", Locale.GERMAN);
-		mailSession = Session.getDefaultInstance(new Properties());
 		sender = new InternetAddress("patrick@reini.net", "Patrick Reinhart");
 		replacementPattern = Pattern.compile("\\$\\{([\\w]+)\\}");
 		pdfCopy = new PdfCopyFields(
 				newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf")));
+		Properties props = new Properties();
+		Path mailProperties = Paths.get("mail.properties");
+		if (exists(mailProperties)) {
+			try (InputStream in = newInputStream(mailProperties)) {
+				props.load(in);
+			}
+		} else {
+			logger.info("{} not available. Using defaults.", mailProperties);
+		}
+		mailSession = Session.getDefaultInstance(props, new Authenticator() {
+			@Override
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(
+						props.getProperty("mail.user"),
+						props.getProperty("mail.password"));
+			}
+		});
 	}
 
 	@Override
@@ -258,7 +275,7 @@ public class Billing implements AutoCloseable {
 
 		SMTPMessage msg = new SMTPMessage(mailSession);
 		msg.setReturnOption(RETURN_HDRS);
-		msg.setNotifyOptions(NOTIFY_DELAY | NOTIFY_FAILURE | NOTIFY_SUCCESS);
+		msg.setNotifyOptions(NOTIFY_FAILURE);
 		msg.setSender(sender);
 		msg.setFrom(sender);
 		msg.addRecipient(RecipientType.TO, recipient);
@@ -266,7 +283,8 @@ public class Billing implements AutoCloseable {
 		msg.setContent(mp);
 		logger.info("Sending document to {}", recipient);
 		Transport.send(msg);
-		Instant instant = date.toLocalDate().atStartOfDay().atZone(ZoneId.of("UTC")).toInstant();
+		Instant instant = date.toLocalDate().atStartOfDay()
+				.atZone(ZoneId.of("UTC")).toInstant();
 		return Collections.singletonMap("Mailed", Date.from(instant));
 	}
 
