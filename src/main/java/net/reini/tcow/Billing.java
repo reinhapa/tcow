@@ -19,16 +19,21 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -38,6 +43,7 @@ import javax.activation.DataSource;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Session;
+import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage.RecipientType;
@@ -116,7 +122,7 @@ public class Billing implements AutoCloseable {
 		pdfCopy.close();
 	}
 
-	void processDocument(Map<String, String> row) {
+	Map<String, Object> processDocument(Map<String, String> row) {
 		String vorname = get("Vorname", row);
 		String nachname = get("Name", row);
 		String anrede = get("Anrede", row);
@@ -160,55 +166,73 @@ public class Billing implements AutoCloseable {
 				try (InputStream in = newInputStream(pdfFile)) {
 					pdfCopy.addDocument(new PdfReader(in));
 				}
-			} else {
-				sendEmail(row, pdfFile);
+			} else if (row.get("Mailed").isEmpty()) {
+				return sendEmail(row, pdfFile);
 			}
 		} catch (IOException | DocumentException | MessagingException e) {
 			logger.error("Error processing PDF", e);
 		}
+		return Collections.emptyMap();
 	}
 
-	private PdfReader createReader(String typ) throws IOException {
+	PdfReader createReader(String typ) throws IOException {
 		switch (typ) {
 		default:
 			return new PdfReader(
-					getClass().getResourceAsStream("/Mitglied.pdf"));
+					getClass().getResourceAsStream("Mitglied.pdf"));
 		case "3":
-			return new PdfReader(
-					getClass().getResourceAsStream("/LuftAbo.pdf"));
+			return new PdfReader(getClass().getResourceAsStream("LuftAbo.pdf"));
 		}
 	}
 
-	void readBillingInformation(Consumer<Map<String, String>> rowConsumer)
+	void readBillingInformation(
+			Function<Map<String, String>, Map<String, Object>> rowFunction)
 			throws Exception {
+		final AtomicBoolean hasChanged = new AtomicBoolean();
 		SpreadSheet spreadSheet = SpreadSheet.createFromFile(
 				dataDir.resolve("Rechnungsliste_Budget.ods").toFile());
-		Sheet sheet = spreadSheet.getSheet(0);
-		List<String> keys = new ArrayList<>();
-		for (int x = 0, mx = sheet.getColumnCount(); x < mx; x++) {
-			String keyName = sheet.getCellAt(x, 0).getTextValue();
-			if (!keyName.isEmpty()) {
+		try {
+			Sheet sheet = spreadSheet.getSheet(0);
+			List<String> keys = new ArrayList<>();
+			final Map<String, Integer> columnNameMap = new HashMap<>();
+			for (int x = 0, mx = sheet.getColumnCount(); x < mx; x++) {
+				String keyName = sheet.getCellAt(x, 0).getTextValue();
+				if (keyName.isEmpty()) {
+					break;
+				}
 				keys.add(keyName);
-			} else {
-				break;
+				columnNameMap.put(keyName, Integer.valueOf(x));
 			}
-		}
-		for (int y = 1, n = sheet.getRowCount(); y < n; y++) {
-			String anrede = sheet.getCellAt(0, y).getTextValue();
-			if (anrede.isEmpty()) {
-				break;
+			for (int y = 1, n = sheet.getRowCount(); y < n; y++) {
+				String anrede = sheet.getCellAt(0, y).getTextValue();
+				if (anrede.isEmpty()) {
+					break;
+				}
+				Map<String, String> rowValues = new LinkedHashMap<>();
+				rowValues.put(keys.get(0), anrede);
+				for (int x = 1, mx = keys.size(); x < mx; x++) {
+					rowValues.put(keys.get(x),
+							sheet.getCellAt(x, y).getTextValue());
+				}
+				final int row = y;
+				Map<String, Object> changedRows = rowFunction.apply(rowValues);
+				changedRows.forEach((key, value) -> {
+					Integer col = columnNameMap.get(key);
+					if (col != null) {
+						sheet.setValueAt(value, col.intValue(), row);
+						hasChanged.set(true);
+					}
+				});
 			}
-			Map<String, String> rowValues = new LinkedHashMap<>();
-			rowValues.put(keys.get(0), anrede);
-			for (int x = 1, mx = keys.size(); x < mx; x++) {
-				rowValues.put(keys.get(x),
-						sheet.getCellAt(x, y).getTextValue());
+		} finally {
+			if (hasChanged.get()) {
+				spreadSheet.saveAs(dataDir
+						.resolve("Rechnungsliste_Budget_new.ods").toFile());
 			}
-			rowConsumer.accept(rowValues);
 		}
 	}
 
-	void sendEmail(Map<String, String> row, Path pdfFile)
+	Map<String, Object> sendEmail(Map<String, String> row, Path pdfFile)
 			throws MessagingException, IOException {
 		String email = get("Email", row);
 		String vorname = get("Vorname", row);
@@ -217,7 +241,6 @@ public class Billing implements AutoCloseable {
 
 		InternetAddress recipient = new InternetAddress(email,
 				format("%s %s", vorname, nachname));
-		logger.info("Sending document to {}", recipient);
 		Multipart mp = new MimeMultipart();
 
 		MimeBodyPart htmlPart = new MimeBodyPart();
@@ -241,7 +264,10 @@ public class Billing implements AutoCloseable {
 		msg.addRecipient(RecipientType.TO, recipient);
 		msg.setSubject("TCOW Jahresbeitrag ".concat(get("Jahr1", row)));
 		msg.setContent(mp);
-		// Transport.send(msg);
+		logger.info("Sending document to {}", recipient);
+		Transport.send(msg);
+		Instant instant = date.toLocalDate().atStartOfDay().atZone(ZoneId.of("UTC")).toInstant();
+		return Collections.singletonMap("Mailed", Date.from(instant));
 	}
 
 	String getEmailBody(Map<String, String> row) throws IOException {
@@ -254,11 +280,11 @@ public class Billing implements AutoCloseable {
 		}
 	}
 
-	private String getEmailResource(Map<String, String> row) {
+	String getEmailResource(Map<String, String> row) {
 		if (get("Bezahlt", row).isEmpty()) {
-			return "/BillingEmailTemplate.txt";
+			return "BillingEmailTemplate.txt";
 		}
-		return "/BillPayedEmailTemplate.txt";
+		return "BillPayedEmailTemplate.txt";
 	}
 
 	String mapReplacements(String input, Map<String, String> row) {
