@@ -155,30 +155,32 @@ public class Billing implements AutoCloseable {
 				nachname, strasse, plz, ort);
 		String bezahltAm = get("Bezahlt", row);
 		try {
-			PdfReader pfdReader = createReader(typ);
 			Path pdfFile = createDirectories(dataDir.resolve(RECHNUNG + "en"))
 					.resolve(format("%s_%s_%s.pdf", RECHNUNG, vorname, nachname)
 							.replace(' ', '_'));
-			logger.info("Creating PDF {}", pdfFile);
-			PdfStamper pdfStamper = new PdfStamper(pfdReader,
-					newOutputStream(pdfFile));
-			AcroFields form = pdfStamper.getAcroFields();
-			form.setField("Adresse", postAdresse);
-			form.setField("Vorname", vornameEinzeln);
-			form.setField("Jahr1", date.format(yearFormatter));
-			form.setField("Jahr2", date.format(yearFormatter));
-			form.setField("Datum", date.format(dateFormatter));
-			form.setField("Bezeichnung", bezeichnung);
-			form.setField("Betrag", betrag);
-			if (!bezahltAm.isEmpty()) {
-				PdfContentByte canvas = pdfStamper.getOverContent(1);
-				Phrase phrase = new Phrase(
-						format("Betrag erhalten am %s", bezahltAm));
-				phrase.getFont().setColor(Color.BLUE);
-				ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT, phrase,
-						380, 50, 10);
+			if (!exists(pdfFile)) {
+				PdfReader pfdReader = createReader(typ);
+				logger.info("Creating PDF {}", pdfFile);
+				PdfStamper pdfStamper = new PdfStamper(pfdReader,
+						newOutputStream(pdfFile));
+				AcroFields form = pdfStamper.getAcroFields();
+				form.setField("Adresse", postAdresse);
+				form.setField("Vorname", vornameEinzeln);
+				form.setField("Jahr1", date.format(yearFormatter));
+				form.setField("Jahr2", date.format(yearFormatter));
+				form.setField("Datum", date.format(dateFormatter));
+				form.setField("Bezeichnung", bezeichnung);
+				form.setField("Betrag", betrag);
+				if (!bezahltAm.isEmpty()) {
+					PdfContentByte canvas = pdfStamper.getOverContent(1);
+					Phrase phrase = new Phrase(
+							format("Betrag erhalten am %s", bezahltAm));
+					phrase.getFont().setColor(Color.BLUE);
+					ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT, phrase,
+							380, 50, 10);
+				}
+				pdfStamper.close();
 			}
-			pdfStamper.close();
 			if (email.isEmpty()) {
 				try (InputStream in = newInputStream(pdfFile)) {
 					pdfCopy.addDocument(new PdfReader(in));

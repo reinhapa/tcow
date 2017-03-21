@@ -4,4 +4,6 @@
 .project
 bin
 build
+mail.properties
 *.odt
+
