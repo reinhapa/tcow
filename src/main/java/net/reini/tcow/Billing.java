@@ -101,8 +101,10 @@ public class Billing implements AutoCloseable {
   private final Path dataDir;
   private final InternetAddress sender;
   private final Pattern replacementPattern;
-  private final PdfCopyFields pdfCopy;
+  private final Path printPdfFile;
   private final Properties mailProperties;
+
+  private PdfCopyFields pdfCopy;
 
   public Billing(String dataDirectory) throws IOException, DocumentException {
     dataDir = Paths.get(dataDirectory);
@@ -112,7 +114,7 @@ public class Billing implements AutoCloseable {
     yearFormatter = ofPattern("yyyy", Locale.GERMAN);
     sender = new InternetAddress("patrick@reini.net", "Patrick Reinhart");
     replacementPattern = Pattern.compile("\\$\\{([\\w]+)\\}");
-    pdfCopy = new PdfCopyFields(newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf")));
+    printPdfFile = dataDir.resolve(RECHNUNG + "enToPrint.pdf");
     mailProperties = new Properties();
     Path mailPropertiesFile = Paths.get("mail.properties");
     if (exists(mailPropertiesFile)) {
@@ -128,6 +130,19 @@ public class Billing implements AutoCloseable {
   @Override
   public void close() throws Exception {
     pdfCopy.close();
+  }
+
+  PdfCopyFields getPdfCopy() throws DocumentException, IOException {
+    if (pdfCopy == null) {
+      if (exists(printPdfFile)) {
+        byte[] existingFileData = readAllBytes(printPdfFile);
+        pdfCopy = new PdfCopyFields(newOutputStream(printPdfFile));
+        pdfCopy.addDocument(new PdfReader(existingFileData));
+      } else {
+        pdfCopy = new PdfCopyFields(newOutputStream(printPdfFile));
+      }
+    }
+    return pdfCopy;
   }
 
   Map<String, Object> processDocument(Map<String, String> row) {
@@ -169,9 +184,7 @@ public class Billing implements AutoCloseable {
         pdfStamper.close();
       }
       if (email.isEmpty()) {
-        try (InputStream in = newInputStream(pdfFile)) {
-          pdfCopy.addDocument(new PdfReader(in));
-        }
+        getPdfCopy().addDocument(new PdfReader(readAllBytes(pdfFile)));
       } else if (row.get("Mailed").isEmpty()) {
         return sendEmail(row, pdfFile);
       }
