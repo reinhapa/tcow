@@ -192,7 +192,7 @@ public class Billing implements AutoCloseable {
           }
         }
       } else if (get("Mailed", row).isEmpty()) {
-        // return sendEmail(row, pdfFile);
+         return sendEmail(row, pdfFile);
       }
     } catch (Exception e) {
       logger.error("Error processing PDF", e);
