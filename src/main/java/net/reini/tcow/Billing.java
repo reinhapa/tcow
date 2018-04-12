@@ -10,7 +10,6 @@ import static java.nio.file.Files.newOutputStream;
 import static java.nio.file.Files.readAllBytes;
 import static java.time.format.DateTimeFormatter.ofPattern;
 
-import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,15 +53,18 @@ import org.jopendocument.dom.spreadsheet.SpreadSheet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Element;
-import com.lowagie.text.Phrase;
-import com.lowagie.text.pdf.AcroFields;
-import com.lowagie.text.pdf.ColumnText;
-import com.lowagie.text.pdf.PdfContentByte;
-import com.lowagie.text.pdf.PdfCopyFields;
-import com.lowagie.text.pdf.PdfReader;
-import com.lowagie.text.pdf.PdfStamper;
+import com.itextpdf.forms.PdfAcroForm;
+import com.itextpdf.forms.PdfPageFormCopier;
+import com.itextpdf.forms.fields.PdfFormField;
+import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfReader;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
+import com.itextpdf.layout.Canvas;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.property.TextAlignment;
+import com.itextpdf.layout.property.VerticalAlignment;
 import com.sun.mail.smtp.SMTPMessage;
 
 public class Billing implements AutoCloseable {
@@ -70,17 +72,18 @@ public class Billing implements AutoCloseable {
 
   public static void main(String[] args) {
     int argsLength = args.length;
-    if (argsLength >= 1) {
+    if (argsLength > 0) {
       try (Billing billing = new Billing(args[0])) {
-        if (argsLength >= 3) {
-          Path pdfFile = Paths.get(args[0]).resolve(args[1]);
+        if (argsLength > 1) {
           Map<String, String> row = new HashMap<>();
-          row.put("Email", args[2]);
-          for (int idx = 3; idx < argsLength; idx++) {
+          row.put("Bezahlt", "");
+          row.put("Mailed", "");
+          row.put("Email", args[1]);
+          for (int idx = 2; idx < argsLength; idx++) {
             String[] parts = args[idx].split("=", 2);
             row.put(parts[0], parts[1]);
           }
-          billing.sendEmail(row, pdfFile);
+          billing.processDocument(row);
         } else {
           billing.readBillingInformation(billing::processDocument);
         }
@@ -88,8 +91,7 @@ public class Billing implements AutoCloseable {
         e.printStackTrace();
       }
     } else {
-      System.out.println(
-          "Usage: TCOW <datadirectory> [<billingPdfFile> <targetEmail> [<rowkey=rowvalue> ..]]");
+      System.out.println("Usage: TCOW <datadirectory> [<targetEmail> [<rowkey=rowvalue> ..]]");
     }
   }
 
@@ -101,10 +103,11 @@ public class Billing implements AutoCloseable {
   private final Path dataDir;
   private final InternetAddress sender;
   private final Pattern replacementPattern;
-  private final PdfCopyFields pdfCopy;
   private final Properties mailProperties;
+  private final PdfPageFormCopier formCopier;
+  private PdfDocument pdfConcatenated;
 
-  public Billing(String dataDirectory) throws IOException, DocumentException {
+  public Billing(String dataDirectory) throws IOException {
     dataDir = Paths.get(dataDirectory);
     logger = LoggerFactory.getLogger(getClass());
     date = LocalDateTime.now();
@@ -112,8 +115,8 @@ public class Billing implements AutoCloseable {
     yearFormatter = ofPattern("yyyy", Locale.GERMAN);
     sender = new InternetAddress("patrick@reini.net", "Patrick Reinhart");
     replacementPattern = Pattern.compile("\\$\\{([\\w]+)\\}");
-    pdfCopy = new PdfCopyFields(newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf")));
     mailProperties = new Properties();
+    formCopier = new PdfPageFormCopier();
     Path mailPropertiesFile = Paths.get("mail.properties");
     if (exists(mailPropertiesFile)) {
       try (InputStream in = newInputStream(mailPropertiesFile)) {
@@ -127,7 +130,9 @@ public class Billing implements AutoCloseable {
 
   @Override
   public void close() throws Exception {
-    pdfCopy.close();
+    if (pdfConcatenated != null) {
+      pdfConcatenated.close();
+    }
   }
 
   Map<String, Object> processDocument(Map<String, String> row) {
@@ -151,31 +156,45 @@ public class Billing implements AutoCloseable {
       if (!exists(pdfFile)) {
         PdfReader pfdReader = createReader(typ);
         logger.info("Creating PDF {}", pdfFile);
-        PdfStamper pdfStamper = new PdfStamper(pfdReader, newOutputStream(pdfFile));
-        AcroFields form = pdfStamper.getAcroFields();
-        form.setField("Adresse", postAdresse);
-        form.setField("Vorname", vornameEinzeln);
-        form.setField("Jahr1", date.format(yearFormatter));
-        form.setField("Jahr2", date.format(yearFormatter));
-        form.setField("Datum", date.format(dateFormatter));
-        form.setField("Bezeichnung", bezeichnung);
-        form.setField("Betrag", betrag);
-        if (!bezahltAm.isEmpty()) {
-          PdfContentByte canvas = pdfStamper.getOverContent(1);
-          Phrase phrase = new Phrase(format("Betrag erhalten am %s", bezahltAm));
-          phrase.getFont().setColor(Color.BLUE);
-          ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT, phrase, 380, 50, 10);
+        try (PdfDocument pdfDocument = new PdfDocument(pfdReader, new PdfWriter(newOutputStream(pdfFile)))){
+          PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDocument, true);
+          Map<String, PdfFormField> fields = form.getFormFields();
+          fields.getOrDefault("Adresse", PdfFormField.createEmptyField(pdfDocument)).setValue(postAdresse);
+          fields.getOrDefault("Vorname", PdfFormField.createEmptyField(pdfDocument)).setValue(vornameEinzeln);
+          fields.getOrDefault("Jahr1", PdfFormField.createEmptyField(pdfDocument)).setValue(date.format(yearFormatter));
+          fields.getOrDefault("Jahr2", PdfFormField.createEmptyField(pdfDocument)).setValue(date.format(yearFormatter));
+          fields.getOrDefault("Datum", PdfFormField.createEmptyField(pdfDocument)).setValue(date.format(dateFormatter));
+          fields.getOrDefault("Bezeichnung", PdfFormField.createEmptyField(pdfDocument)).setValue(bezeichnung);
+          fields.getOrDefault("Betrag", PdfFormField.createEmptyField(pdfDocument)).setValue(betrag);
+          
+          //Flatten fields
+          form.flattenFields();
+          
+          if (!bezahltAm.isEmpty()) {
+            logger.info("{} {} already payed on {}", vorname, nachname, bezahltAm);
+            Paragraph phrase = new Paragraph(format("Betrag erhalten am %s", bezahltAm));
+            phrase.setFontColor(DeviceRgb.BLUE);
+            PdfCanvas over = new PdfCanvas(pdfDocument.getFirstPage());
+            try (Canvas canvas = new Canvas(over, pdfDocument, pdfDocument.getDefaultPageSize())) {
+              canvas.showTextAligned(phrase, 380, 50, 1, TextAlignment.CENTER, VerticalAlignment.TOP, 0.1f);
+            }
+          }
         }
-        pdfStamper.close();
       }
       if (email.isEmpty()) {
         try (InputStream in = newInputStream(pdfFile)) {
-          pdfCopy.addDocument(new PdfReader(in));
+          if (pdfConcatenated == null) {
+            pdfConcatenated =
+                new PdfDocument(new PdfWriter(newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf"))));
+          }
+          try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(in))) {
+            pdfDocument.copyPagesTo(1, pdfDocument.getNumberOfPages(), pdfConcatenated, formCopier);
+          }
         }
-      } else if (row.get("Mailed").isEmpty()) {
-        return sendEmail(row, pdfFile);
+      } else if (get("Mailed", row).isEmpty()) {
+        // return sendEmail(row, pdfFile);
       }
-    } catch (IOException | DocumentException | MessagingException e) {
+    } catch (Exception e) {
       logger.error("Error processing PDF", e);
     }
     return Collections.emptyMap();
@@ -237,6 +256,7 @@ public class Billing implements AutoCloseable {
   Map<String, Object> sendEmail(Map<String, String> row, Path pdfFile)
       throws MessagingException, IOException {
     String email = get("Email", row);
+    String email2 = get("Email2", row);
     String vorname = get("Vorname", row);
     String nachname = get("Name", row);
     String emailBody = getEmailBody(row);
@@ -262,6 +282,9 @@ public class Billing implements AutoCloseable {
     msg.setSender(sender);
     msg.setFrom(sender);
     msg.addRecipient(RecipientType.TO, recipient);
+    if (!email2.isEmpty()) {
+      msg.addRecipient(RecipientType.CC, new InternetAddress(email2));
+    }
     msg.setSubject("TCOW Jahresbeitrag ".concat(get("Jahr1", row)));
     msg.setContent(mp);
     logger.info("Sending document to {}", recipient);
@@ -301,7 +324,7 @@ public class Billing implements AutoCloseable {
         case "Jahr2":
           return date.format(yearFormatter);
         default:
-          return "<" + k + ">";
+          return "<" + key + ">";
       }
     });
   }
