@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.6.0.final using JasperReports Library version 6.6.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Blank_A4" pageWidth="595" pageHeight="842" columnWidth="454" leftMargin="85" rightMargin="56" topMargin="85" bottomMargin="85" uuid="5928660d-be86-4f6e-99b6-b5940c10aa28">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit." value="mm"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="mm"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="mm"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="mm"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="mm"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="mm"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="mm"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="mm"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="mm"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="Anrede" class="java.lang.String"/>
+	<field name="Vorname" class="java.lang.String"/>
+	<field name="Name" class="java.lang.String"/>
+	<field name="Strasse" class="java.lang.String"/>
+	<field name="PLZ" class="java.lang.String"/>
+	<field name="Ort" class="java.lang.String"/>
+	<field name="Bezeichnung" class="java.lang.String"/>
+	<field name="Betrag" class="java.lang.Integer"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="672" splitType="Stretch">
+			<image>
+				<reportElement x="-18" y="-31" width="140" height="90" uuid="6f89eb30-48da-4918-a1f7-a54fd4d8fb19"/>
+				<imageExpression><![CDATA["tcowlogo.png"]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="0" y="60" width="197" height="80" uuid="7c5bfbe3-20a3-435e-bf6b-e26ae92efb77"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="11"/>
+				</textElement>
+				<text><![CDATA[Tauchclub Obwalden
+c/o Patrick Reinhart  
+Grund
+Flüelistrasse 63
+6064 Kerns]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="267" y="60" width="183" height="80" uuid="8a9da3a1-3228-4c69-abfa-2d69dd93a5a8"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Anrede} + "\n" +  
+ $F{Vorname} + " " + $F{Name} + "\n" +
+ $F{Strasse} + "\n" +
+ $F{PLZ}  + " "  + $F{Ort}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="180" width="450" height="20" uuid="1c6b1a5b-e703-4526-95d2-24f7286f726c"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Kerns, " + DATEFORMAT(NOW(),"dd. MMMM yyyy")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="220" width="450" height="25" uuid="0f9c321e-0dfc-443a-8418-ae2314e9456a"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Mitgliederbeitrag " + DATEFORMAT(NOW(), "YYYY")]]></textFieldExpression>
+			</textField>
+			<image>
+				<reportElement x="0" y="554" width="170" height="70" uuid="0c8d5df4-9f73-4217-a50e-cd79f9c371a2"/>
+				<imageExpression><![CDATA["SignaturPatrick.jpg"]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement x="0" y="270" width="450" height="100" uuid="a3f03827-a73b-4ad7-8475-2346fbf5bfa8"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Hallo " + $F{Vorname} + ",\n\n" +
+"Wieder hat ein neues Vereinsjahr begonnen und der Beitrag für das Jahr " + DATEFORMAT(NOW(), "yyyy") +  " ist fällig.\n\n" +
+"Darf ich Dich bitten, den folgenden Beitrag innerhalb von 30 Tagen einzuzahlen und somit dem Verein zu helfen, seine Tätigkeiten aufrecht zu erhalten."]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="419" width="450" height="91" uuid="5d354071-7d08-4530-b0c4-fe57c2060717"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="11"/>
+				</textElement>
+				<text><![CDATA[Vermeide bitte nach Möglichleit das Bezahlen am Postschalter, da dadurch zusätzliche Gebühren für den Verein anfallen, welche wir lieber für anderes ausgeben möchten.
+
+Ich wünsche Dir im neuen Jahr viele tolle Tauchgänge und freue mich, Dich im Namen des Vorstands an möglichst vielen Tauchanlässen zu begrüssen.
+
+Genauere Informationen über die geplanten Anlässe sind auf unserer Webseite www.tcow.ch verfügbar.
+]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="530" width="155" height="140" uuid="48356312-19a5-46ad-8ec8-b21f8fdb1fe3"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="11"/>
+				</textElement>
+				<text><![CDATA[Viu Griäss und guet Luft
+
+
+
+		
+
+
+
+Patrick Reinhart
+Kassier Tauchclub Obwalden]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="380" width="450" height="20" uuid="97bf5d46-492d-4716-a23b-6c8bfaeed651"/>
+				<textElement>
+					<font fontName="DejaVu Sans" size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Bezeichnung} + " " + $F{Betrag}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
