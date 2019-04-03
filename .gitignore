@@ -6,4 +6,4 @@ bin
 build
 mail.properties
 *.odt
-
+*.pdf
