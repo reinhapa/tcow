@@ -16,11 +16,11 @@ public class TcowReport {
     // try (Connection con =
     // DriverManager.getConnection("jdbc:mysql://svtapir.home/reini", "pr", "mirexal")) {
     try {
-      JasperReport jasperReport = JasperCompileManager.compileReport("Mitglied.jrxml");
+      JasperReport jasperReport = JasperCompileManager.compileReport("report.jrxml");
       JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<>(),
           new SpreadSheetDataSource(SpreadSheet
               .createFromFile(new File("/mnt/Data/TCOW/2019/Rechnungsliste_Budget.ods"))));
-      JasperExportManager.exportReportToPdfFile(jasperPrint, "Mitglied.pdf");
+      JasperExportManager.exportReportToPdfFile(jasperPrint, "report.pdf");
     } catch (Exception e) {
       e.printStackTrace();
     }

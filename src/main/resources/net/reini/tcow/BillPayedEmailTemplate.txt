@@ -1,7 +1,7 @@
 Hallo ${Vorname},
 
 Im Anhang findest Du die Rechnung für ein TCOW ${Bezeichnung} für
-das Jahr ${Jahr1} den Du bereits am ${Bezahlt} bezahlt hast.
+das Jahr ${Jahr} den Du bereits am ${Bezahlt} bezahlt hast.
 
 Freundliche Grüsse
 

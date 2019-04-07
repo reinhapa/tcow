@@ -14,10 +14,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -53,19 +55,17 @@ import org.jopendocument.dom.spreadsheet.SpreadSheet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.itextpdf.forms.PdfAcroForm;
 import com.itextpdf.forms.PdfPageFormCopier;
-import com.itextpdf.forms.fields.PdfFormField;
-import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
-import com.itextpdf.layout.Canvas;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.property.TextAlignment;
-import com.itextpdf.layout.property.VerticalAlignment;
 import com.sun.mail.smtp.SMTPMessage;
+
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
 
 public class Billing implements AutoCloseable {
   private static final String RECHNUNG = "Rechnung";
@@ -75,7 +75,7 @@ public class Billing implements AutoCloseable {
     if (argsLength > 0) {
       try (Billing billing = new Billing(args[0])) {
         if (argsLength > 1) {
-          Map<String, String> row = new HashMap<>();
+          Map<String, Object> row = new HashMap<>();
           row.put("Bezahlt", "");
           row.put("Mailed", "");
           row.put("Email", args[1]);
@@ -111,7 +111,7 @@ public class Billing implements AutoCloseable {
     dataDir = Paths.get(dataDirectory);
     logger = LoggerFactory.getLogger(getClass());
     date = LocalDateTime.now();
-    dateFormatter = ofPattern("dd. MMMM yyyy", Locale.GERMAN);
+    dateFormatter = ofPattern("dd.MM.yyyy", Locale.GERMAN);
     yearFormatter = ofPattern("yyyy", Locale.GERMAN);
     sender = new InternetAddress("patrick@reini.net", "Patrick Reinhart");
     replacementPattern = Pattern.compile("\\$\\{([\\w]+)\\}");
@@ -135,57 +135,27 @@ public class Billing implements AutoCloseable {
     }
   }
 
-  Map<String, Object> processDocument(Map<String, String> row) {
+  Map<String, Object> processDocument(Map<String, Object> row) {
     String vorname = get("Vorname", row);
     String nachname = get("Name", row);
-    String anrede = get("Anrede", row);
-    String strasse = get("Strasse", row);
-    String plz = get("PLZ", row);
-    String ort = get("Ort", row);
-    String bezeichnung = get("Bezeichnung", row);
-    String betrag = get("Betrag", row);
     String email = get("Email", row);
-    String typ = get("Typ", row);
-    String vornameEinzeln = vorname.replaceFirst(" & .+", "").concat(",");
-    String postAdresse =
-        format("%s\n%s %s\n%s\n%s %s", anrede, vorname, nachname, strasse, plz, ort);
-    String bezahltAm = get("Bezahlt", row);
     try {
       Path pdfFile = createDirectories(dataDir.resolve(RECHNUNG + "en"))
           .resolve(format("%s_%s_%s.pdf", RECHNUNG, vorname, nachname).replace(' ', '_'));
       if (!exists(pdfFile)) {
-        PdfReader pfdReader = createReader(typ);
         logger.info("Creating PDF {}", pdfFile);
-        try (PdfDocument pdfDocument = new PdfDocument(pfdReader, new PdfWriter(newOutputStream(pdfFile)))){
-          PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDocument, true);
-          Map<String, PdfFormField> fields = form.getFormFields();
-          fields.getOrDefault("Adresse", PdfFormField.createEmptyField(pdfDocument)).setValue(postAdresse);
-          fields.getOrDefault("Vorname", PdfFormField.createEmptyField(pdfDocument)).setValue(vornameEinzeln);
-          fields.getOrDefault("Jahr1", PdfFormField.createEmptyField(pdfDocument)).setValue(date.format(yearFormatter));
-          fields.getOrDefault("Jahr2", PdfFormField.createEmptyField(pdfDocument)).setValue(date.format(yearFormatter));
-          fields.getOrDefault("Datum", PdfFormField.createEmptyField(pdfDocument)).setValue(date.format(dateFormatter));
-          fields.getOrDefault("Bezeichnung", PdfFormField.createEmptyField(pdfDocument)).setValue(bezeichnung);
-          fields.getOrDefault("Betrag", PdfFormField.createEmptyField(pdfDocument)).setValue(betrag);
-          
-          //Flatten fields
-          form.flattenFields();
-          
-          if (!bezahltAm.isEmpty()) {
-            logger.info("{} {} already payed on {}", vorname, nachname, bezahltAm);
-            Paragraph phrase = new Paragraph(format("Betrag erhalten am %s", bezahltAm));
-            phrase.setFontColor(DeviceRgb.BLUE);
-            PdfCanvas over = new PdfCanvas(pdfDocument.getFirstPage());
-            try (Canvas canvas = new Canvas(over, pdfDocument, pdfDocument.getDefaultPageSize())) {
-              canvas.showTextAligned(phrase, 380, 50, 1, TextAlignment.CENTER, VerticalAlignment.TOP, 0.1f);
-            }
-          }
+        try (OutputStream pdfOut = newOutputStream(pdfFile)) {
+          JasperReport jasperReport = JasperCompileManager.compileReport("report.jrxml");
+          JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<>(),
+              new SingleRowDataSource((key, valueType) -> getTypeValue(row, key, valueType)));
+          JasperExportManager.exportReportToPdfStream(jasperPrint, pdfOut);
         }
       }
       if (email.isEmpty()) {
         try (InputStream in = newInputStream(pdfFile)) {
           if (pdfConcatenated == null) {
-            pdfConcatenated =
-                new PdfDocument(new PdfWriter(newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf"))));
+            pdfConcatenated = new PdfDocument(
+                new PdfWriter(newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf"))));
           }
           try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(in))) {
             pdfDocument.copyPagesTo(1, pdfDocument.getNumberOfPages(), pdfConcatenated, formCopier);
@@ -200,16 +170,22 @@ public class Billing implements AutoCloseable {
     return Collections.emptyMap();
   }
 
-  PdfReader createReader(String typ) throws IOException {
-    switch (typ) {
-      default:
-        return new PdfReader(getClass().getResourceAsStream("Mitglied.pdf"));
-      case "3":
-        return new PdfReader(getClass().getResourceAsStream("LuftAbo.pdf"));
+  private Object getTypeValue(Map<String, Object> row, String key, Class<?> valueType) {
+    String value = get(key, row);
+    if (String.class.equals(valueType)) {
+      return value;
+    } else if (value.isEmpty()) {
+      return null;
+    } else if (Integer.class.equals(valueType)) {
+      return Integer.valueOf(value);
+    } else if (Date.class.equals(valueType)) {
+      return Date.from(dateFormatter.parse(value, LocalDate::from)
+          .atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
+    return null;
   }
 
-  void readBillingInformation(Function<Map<String, String>, Map<String, Object>> rowFunction)
+  void readBillingInformation(Function<Map<String, Object>, Map<String, Object>> rowFunction)
       throws Exception {
     final AtomicBoolean hasChanged = new AtomicBoolean();
     SpreadSheet spreadSheet =
@@ -231,7 +207,7 @@ public class Billing implements AutoCloseable {
         if (anrede.isEmpty()) {
           break;
         }
-        Map<String, String> rowValues = new LinkedHashMap<>();
+        Map<String, Object> rowValues = new LinkedHashMap<>();
         rowValues.put(keys.get(0), anrede);
         for (int x = 1, mx = keys.size(); x < mx; x++) {
           rowValues.put(keys.get(x), sheet.getCellAt(x, y).getTextValue());
@@ -253,7 +229,7 @@ public class Billing implements AutoCloseable {
     }
   }
 
-  Map<String, Object> sendEmail(Map<String, String> row, Path pdfFile)
+  Map<String, Object> sendEmail(Map<String, Object> row, Path pdfFile)
       throws MessagingException, IOException {
     String email = get("Email", row);
     String email2 = get("Email2", row);
@@ -285,7 +261,7 @@ public class Billing implements AutoCloseable {
     if (!email2.isEmpty()) {
       msg.addRecipient(RecipientType.CC, new InternetAddress(email2));
     }
-    msg.setSubject("TCOW Jahresbeitrag ".concat(get("Jahr1", row)));
+    msg.setSubject("TCOW Jahresbeitrag ".concat(get("Jahr", row)));
     msg.setContent(mp);
     logger.info("Sending document to {}", recipient);
     Transport.send(msg, mailProperties.getProperty("mail.user"),
@@ -294,21 +270,21 @@ public class Billing implements AutoCloseable {
     return Collections.singletonMap("Mailed", Date.from(instant));
   }
 
-  String getEmailBody(Map<String, String> row) throws IOException {
+  String getEmailBody(Map<String, Object> row) throws IOException {
     try (InputStream in = getClass().getResourceAsStream(getEmailResource(row))) {
       return new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).lines()
           .map(line -> mapReplacements(line, row)).collect(Collectors.joining("\n"));
     }
   }
 
-  String getEmailResource(Map<String, String> row) {
+  String getEmailResource(Map<String, Object> row) {
     if (get("Bezahlt", row).isEmpty()) {
       return "BillingEmailTemplate.txt";
     }
     return "BillPayedEmailTemplate.txt";
   }
 
-  String mapReplacements(String input, Map<String, String> row) {
+  String mapReplacements(String input, Map<String, Object> row) {
     StringBuffer result = new StringBuffer();
     Matcher matcher = replacementPattern.matcher(input);
     while (matcher.find()) {
@@ -317,15 +293,14 @@ public class Billing implements AutoCloseable {
     return matcher.appendTail(result).toString();
   }
 
-  String get(String key, Map<String, String> row) {
-    return row.computeIfAbsent(key, k -> {
+  String get(String key, Map<String, Object> row) {
+    return String.valueOf(row.computeIfAbsent(key, k -> {
       switch (k) {
-        case "Jahr1":
-        case "Jahr2":
+        case "Jahr":
           return date.format(yearFormatter);
         default:
           return "<" + key + ">";
       }
-    });
+    }));
   }
 }
