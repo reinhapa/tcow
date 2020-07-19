@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.6.0.final using JasperReports Library version 6.6.0  -->
+<!-- Created with Jaspersoft Studio version 6.12.2.final using JasperReports Library version 6.12.2-75c5e90a222ab406e416cbf590a5397028a52de3  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Blank_A4" pageWidth="595" pageHeight="842" columnWidth="454" leftMargin="85" rightMargin="56" topMargin="85" bottomMargin="85" uuid="5928660d-be86-4f6e-99b6-b5940c10aa28">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<property name="com.jaspersoft.studio.unit." value="mm"/>
@@ -32,7 +32,7 @@
 				<imageExpression><![CDATA["tcowlogo.png"]]></imageExpression>
 			</image>
 			<staticText>
-				<reportElement x="0" y="60" width="197" height="80" uuid="7c5bfbe3-20a3-435e-bf6b-e26ae92efb77"/>
+				<reportElement x="0" y="73" width="197" height="80" uuid="7c5bfbe3-20a3-435e-bf6b-e26ae92efb77"/>
 				<textElement>
 					<font fontName="DejaVu Sans" size="11"/>
 				</textElement>
@@ -43,7 +43,7 @@ Flüelistrasse 63
 6064 Kerns]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="267" y="60" width="183" height="80" uuid="8a9da3a1-3228-4c69-abfa-2d69dd93a5a8"/>
+				<reportElement x="255" y="73" width="183" height="80" uuid="8a9da3a1-3228-4c69-abfa-2d69dd93a5a8"/>
 				<textElement>
 					<font fontName="DejaVu Sans" size="11"/>
 				</textElement>
@@ -126,6 +126,16 @@ Kassier Tauchclub Obwalden]]></text>
 				</textElement>
 				<textFieldExpression><![CDATA["CHF  " + $F{Betrag}]]></textFieldExpression>
 			</textField>
+			<staticText>
+				<reportElement x="255" y="56" width="183" height="11" uuid="d2c251fb-16b5-4f12-8ec4-ef98fa8d89e0"/>
+				<box>
+					<bottomPen lineWidth="1.0"/>
+				</box>
+				<textElement>
+					<font fontName="DejaVu Sans" size="6"/>
+				</textElement>
+				<text><![CDATA[Tauchclub Obwalden, Flüelistrasse 63, 6064 Kerns]]></text>
+			</staticText>
 		</band>
 	</detail>
 </jasperReport>

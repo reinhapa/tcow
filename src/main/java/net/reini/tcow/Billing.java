@@ -255,7 +255,6 @@ public class Billing implements AutoCloseable {
     SMTPMessage msg = new SMTPMessage(mailSession);
     msg.setReturnOption(RETURN_HDRS);
     msg.setNotifyOptions(NOTIFY_FAILURE);
-    msg.setSender(sender);
     msg.setFrom(sender);
     msg.addRecipient(RecipientType.TO, recipient);
     if (!email2.isEmpty()) {
