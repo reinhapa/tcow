@@ -18,10 +18,12 @@
 	<field name="Vorname" class="java.lang.String"/>
 	<field name="Name" class="java.lang.String"/>
 	<field name="Strasse" class="java.lang.String"/>
+	<field name="Nr" class="java.lang.String"/>
 	<field name="PLZ" class="java.lang.String"/>
 	<field name="Ort" class="java.lang.String"/>
 	<field name="Bezeichnung" class="java.lang.String"/>
-	<field name="Betrag" class="java.lang.Integer"/>
+	<field name="Betrag" class="java.math.BigDecimal"/>
+	<field name="QrInvoice" class="java.io.InputStream"/>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
@@ -49,7 +51,7 @@ Flüelistrasse 63
 				</textElement>
 				<textFieldExpression><![CDATA[$F{Anrede} + "\n" +  
  $F{Vorname} + " " + $F{Name} + "\n" +
- $F{Strasse} + "\n" +
+ $F{Strasse} + " " + $F{Nr} + "\n" +
  $F{PLZ}  + " "  + $F{Ort}]]></textFieldExpression>
 			</textField>
 			<textField>

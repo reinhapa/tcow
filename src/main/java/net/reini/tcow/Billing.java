@@ -11,10 +11,12 @@ import static java.nio.file.Files.readAllBytes;
 import static java.time.format.DateTimeFormatter.ofPattern;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -61,6 +64,16 @@ import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.sun.mail.smtp.SMTPMessage;
 
+import ch.codeblock.qrinvoice.FontFamily;
+import ch.codeblock.qrinvoice.OutputFormat;
+import ch.codeblock.qrinvoice.PageSize;
+import ch.codeblock.qrinvoice.QrInvoicePaymentPartReceiptCreator;
+import ch.codeblock.qrinvoice.model.QrInvoice;
+import ch.codeblock.qrinvoice.model.ReferenceType;
+import ch.codeblock.qrinvoice.model.builder.QrInvoiceBuilder;
+import ch.codeblock.qrinvoice.output.PaymentPartReceipt;
+import ch.codeblock.qrinvoice.util.CreditorReferenceUtils;
+import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -73,7 +86,8 @@ public class Billing implements AutoCloseable {
   public static void main(String[] args) {
     int argsLength = args.length;
     if (argsLength > 0) {
-      try (Billing billing = new Billing(args[0])) {
+      Path dataDir = Paths.get(args[0]);
+      try (Billing billing = new Billing(dataDir)) {
         if (argsLength > 1) {
           Map<String, Object> row = new HashMap<>();
           row.put("Bezahlt", "");
@@ -85,7 +99,8 @@ public class Billing implements AutoCloseable {
           }
           billing.processDocument(row);
         } else {
-          billing.readBillingInformation(billing::processDocument);
+          billing.readBillingInformation(dataDir.resolve("Rechnungsliste_Budget.ods"),
+              billing::processDocument);
         }
       } catch (Exception e) {
         e.printStackTrace();
@@ -105,10 +120,11 @@ public class Billing implements AutoCloseable {
   private final Pattern replacementPattern;
   private final Properties mailProperties;
   private final PdfPageFormCopier formCopier;
+
   private PdfDocument pdfConcatenated;
 
-  public Billing(String dataDirectory) throws IOException {
-    dataDir = Paths.get(dataDirectory);
+  public Billing(Path dataDir) throws IOException {
+    this.dataDir = dataDir;
     logger = LoggerFactory.getLogger(getClass());
     date = LocalDateTime.now();
     dateFormatter = ofPattern("dd.MM.yyyy", Locale.GERMAN);
@@ -136,38 +152,85 @@ public class Billing implements AutoCloseable {
   }
 
   Map<String, Object> processDocument(Map<String, Object> row) {
-    String vorname = get("Vorname", row);
-    String nachname = get("Name", row);
-    String email = get("Email", row);
     try {
       Path pdfFile = createDirectories(dataDir.resolve(RECHNUNG + "en"))
-          .resolve(format("%s_%s_%s.pdf", RECHNUNG, vorname, nachname).replace(' ', '_'));
+          .resolve(format("%s_%s_%s.pdf", RECHNUNG, get("Vorname", row), get("Name", row))
+              .replace(' ', '_'));
       if (!exists(pdfFile)) {
-        logger.info("Creating PDF {}", pdfFile);
-        try (OutputStream pdfOut = newOutputStream(pdfFile)) {
-          JasperReport jasperReport = JasperCompileManager.compileReport("report.jrxml");
-          JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<>(),
-              new SingleRowDataSource((key, valueType) -> getTypeValue(row, key, valueType)));
-          JasperExportManager.exportReportToPdfStream(jasperPrint, pdfOut);
-        }
+        row.put("QrInvoice", Base64.getEncoder().encodeToString(createQrInvoice(row)));
+        createPdf(pdfFile, row);
       }
+      String email = get("Email", row);
       if (email.isEmpty()) {
-        try (InputStream in = newInputStream(pdfFile)) {
-          if (pdfConcatenated == null) {
-            pdfConcatenated = new PdfDocument(
-                new PdfWriter(newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf"))));
-          }
-          try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(in))) {
-            pdfDocument.copyPagesTo(1, pdfDocument.getNumberOfPages(), pdfConcatenated, formCopier);
-          }
-        }
+        sendEmail(pdfFile);
       } else if (get("Mailed", row).isEmpty()) {
-         return sendEmail(row, pdfFile);
+        return sendEmail(row, pdfFile);
       }
     } catch (Exception e) {
       logger.error("Error processing PDF", e);
     }
     return Collections.emptyMap();
+  }
+
+  void sendEmail(Path pdfFile) throws IOException {
+    try (InputStream in = newInputStream(pdfFile)) {
+      if (pdfConcatenated == null) {
+        pdfConcatenated = new PdfDocument(
+            new PdfWriter(newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf"))));
+      }
+      try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(in))) {
+        pdfDocument.copyPagesTo(1, pdfDocument.getNumberOfPages(), pdfConcatenated, formCopier);
+      }
+    }
+  }
+
+  void createPdf(Path pdfFile, Map<String, Object> row) throws IOException, JRException {
+    logger.info("Creating PDF {}", pdfFile);
+    try (OutputStream pdfOut = newOutputStream(pdfFile)) {
+      JasperReport jasperReport = JasperCompileManager.compileReport("report.jrxml");
+      JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<>(),
+          new SingleRowDataSource((key, valueType) -> getTypeValue(row, key, valueType)));
+      JasperExportManager.exportReportToPdfStream(jasperPrint, pdfOut);
+    }
+  }
+
+  byte[] createQrInvoice(Map<String, Object> row) {
+    final QrInvoice qrInvoice = QrInvoiceBuilder.create() //
+        .creditorIBAN("CH92 8080 8005 2401 3817 1") // CH44 3199 9123 0008 8901 2 
+        .paymentAmountInformation(p -> p.chf(new BigDecimal(get("Betrag", row)))) //
+        .creditor(c -> c //
+            .structuredAddress() //
+            .name("Tauchclub Obwalden") //
+            .streetName("Flüelistrasse") //
+            .houseNumber("63") //
+            .postalCode("6064") //
+            .city("Kerns") //
+            .country("CH") //
+        ) //
+        .ultimateDebtor(d -> d //
+            .structuredAddress() //
+            .name(format("%s %s", get("Vorname", row), get("Name", row))) //
+            .streetName(get("Strasse", row)) //
+            .houseNumber(get("Nr", row)) //
+            .postalCode(get("PLZ", row)) //
+            .city(get("Ort", row)) //
+            .country("CH") //
+        ) //
+        .paymentReference(r -> r //
+//            .referenceType(ReferenceType.QR_REFERENCE) //
+//            .reference(QRReferenceUtils.createQrReference(get("R#", row))) //
+            .referenceType(ReferenceType.CREDITOR_REFERENCE) //
+            .reference(CreditorReferenceUtils.createCreditorReference(get("R#", row)))
+        ).build(); //
+    final PaymentPartReceipt paymentPartReceipt = QrInvoicePaymentPartReceiptCreator //
+        .create() //
+        .qrInvoice(qrInvoice) //
+        .outputFormat(OutputFormat.PNG) //
+        .pageSize(PageSize.DIN_LANG) //
+        .fontFamily(FontFamily.LIBERATION_SANS) // or HELVETICA, ARIAL
+        .locale(Locale.GERMAN) //
+        .createPaymentPartReceipt(); //
+    return paymentPartReceipt.getData();
   }
 
   private Object getTypeValue(Map<String, Object> row, String key, Class<?> valueType) {
@@ -178,18 +241,21 @@ public class Billing implements AutoCloseable {
       return null;
     } else if (Integer.class.equals(valueType)) {
       return Integer.valueOf(value);
+    } else if (BigDecimal.class.equals(valueType)) {
+      return new BigDecimal(value);
     } else if (Date.class.equals(valueType)) {
       return Date.from(dateFormatter.parse(value, LocalDate::from)
           .atStartOfDay(ZoneId.systemDefault()).toInstant());
+    } else if (InputStream.class.equals(valueType)) {
+      return new ByteArrayInputStream(Base64.getDecoder().decode(value));
     }
     return null;
   }
 
-  void readBillingInformation(Function<Map<String, Object>, Map<String, Object>> rowFunction)
-      throws Exception {
+  void readBillingInformation(Path rechnungsListeOds,
+      Function<Map<String, Object>, Map<String, Object>> rowFunction) throws Exception {
     final AtomicBoolean hasChanged = new AtomicBoolean();
-    SpreadSheet spreadSheet =
-        SpreadSheet.createFromFile(dataDir.resolve("Rechnungsliste_Budget.ods").toFile());
+    SpreadSheet spreadSheet = SpreadSheet.createFromFile(rechnungsListeOds.toFile());
     try {
       Sheet sheet = spreadSheet.getSheet(0);
       List<String> keys = new ArrayList<>();
