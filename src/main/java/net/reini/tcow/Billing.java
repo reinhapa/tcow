@@ -41,18 +41,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage.RecipientType;
-import javax.mail.internet.MimeMultipart;
-import javax.mail.util.ByteArrayDataSource;
-
 import org.jopendocument.dom.spreadsheet.Sheet;
 import org.jopendocument.dom.spreadsheet.SpreadSheet;
 import org.slf4j.Logger;
@@ -73,6 +61,17 @@ import ch.codeblock.qrinvoice.model.ReferenceType;
 import ch.codeblock.qrinvoice.model.builder.QrInvoiceBuilder;
 import ch.codeblock.qrinvoice.output.PaymentPartReceipt;
 import ch.codeblock.qrinvoice.util.CreditorReferenceUtils;
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage.RecipientType;
+import jakarta.mail.internet.MimeMultipart;
+import jakarta.mail.util.ByteArrayDataSource;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
@@ -163,7 +162,7 @@ public class Billing implements AutoCloseable {
       String email = get("Email", row);
       if (email.isEmpty()) {
         sendEmail(pdfFile);
-      } else if (get("Mailed", row).isEmpty()) {
+      } else if (get("Mailed", row).isEmpty() && "x".equals(get("RM", row))) {
         return sendEmail(row, pdfFile);
       }
     } catch (Exception e) {
@@ -196,7 +195,7 @@ public class Billing implements AutoCloseable {
 
   byte[] createQrInvoice(Map<String, Object> row) {
     final QrInvoice qrInvoice = QrInvoiceBuilder.create() //
-        .creditorIBAN("CH92 8080 8005 2401 3817 1") // CH44 3199 9123 0008 8901 2 
+        .creditorIBAN("CH92 8080 8005 2401 3817 1") // CH44 3199 9123 0008 8901 2
         .paymentAmountInformation(p -> p.chf(new BigDecimal(get("Betrag", row)))) //
         .creditor(c -> c //
             .structuredAddress() //
@@ -217,11 +216,11 @@ public class Billing implements AutoCloseable {
             .country("CH") //
         ) //
         .paymentReference(r -> r //
-//            .referenceType(ReferenceType.QR_REFERENCE) //
-//            .reference(QRReferenceUtils.createQrReference(get("R#", row))) //
+            // .referenceType(ReferenceType.QR_REFERENCE) //
+            // .reference(QRReferenceUtils.createQrReference(get("R#", row))) //
             .referenceType(ReferenceType.CREDITOR_REFERENCE) //
-            .reference(CreditorReferenceUtils.createCreditorReference(get("R#", row)))
-        ).build(); //
+            .reference(CreditorReferenceUtils.createCreditorReference(get("R#", row))))
+        .build(); //
     final PaymentPartReceipt paymentPartReceipt = QrInvoicePaymentPartReceiptCreator //
         .create() //
         .qrInvoice(qrInvoice) //
