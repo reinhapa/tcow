@@ -1,9 +1,8 @@
 package net.reini.tcow;
 
-import java.io.File;
 import java.util.HashMap;
 
-import org.jopendocument.dom.spreadsheet.SpreadSheet;
+import org.odftoolkit.odfdom.doc.OdfSpreadsheetDocument;
 
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
@@ -13,13 +12,10 @@ import net.sf.jasperreports.engine.JasperReport;
 
 public class TcowReport {
   public static void main(String[] args) {
-    // try (Connection con =
-    // DriverManager.getConnection("jdbc:mysql://svtapir.home/reini", "pr", "mirexal")) {
     try {
       JasperReport jasperReport = JasperCompileManager.compileReport("report.jrxml");
       JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<>(),
-          new SpreadSheetDataSource(SpreadSheet
-              .createFromFile(new File("/mnt/Data/TCOW/2019/Rechnungsliste_Budget.ods"))));
+          new SpreadSheetDataSource(OdfSpreadsheetDocument.loadDocument("/mnt/data/TCOW/2021/Rechnungsliste_Budget.ods")));
       JasperExportManager.exportReportToPdfFile(jasperPrint, "report.pdf");
     } catch (Exception e) {
       e.printStackTrace();

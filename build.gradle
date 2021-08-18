@@ -9,7 +9,6 @@ plugins {
 mainClassName = 'net.reini.tcow.TcowReport'
 
 repositories {
-    jcenter()
 //    mavenLocal()
     mavenCentral()
 }
@@ -21,12 +20,12 @@ jar {
 }
 
 dependencies {
+    implementation 'org.odftoolkit:odfdom-java:1.0.0-BETA1'
     implementation 'org.slf4j:slf4j-api:1.7.32'
     implementation 'ch.codeblock.qrinvoice.core:qrinvoice-core:1.12'
     implementation 'ch.codeblock.qrinvoice.openpdf:qrinvoice-openpdf:1.12'
     implementation 'com.itextpdf:kernel:7.1.16'
     implementation 'com.itextpdf:forms:7.1.16'
-    implementation 'org.jopendocument:jOpenDocument:1.3'
     implementation 'jakarta.mail:jakarta.mail-api:2.0.1'
     implementation 'com.sun.mail:jakarta.mail:2.0.1'
     implementation 'bouncycastle:bcprov-jdk14:140'

@@ -27,6 +27,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,8 +42,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.jopendocument.dom.spreadsheet.Sheet;
-import org.jopendocument.dom.spreadsheet.SpreadSheet;
+import org.odftoolkit.odfdom.doc.OdfSpreadsheetDocument;
+import org.odftoolkit.odfdom.doc.table.OdfTable;
+import org.odftoolkit.odfdom.doc.table.OdfTableCell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -160,9 +162,9 @@ public class Billing implements AutoCloseable {
         createPdf(pdfFile, row);
       }
       String email = get("Email", row);
-      if (email.isEmpty()) {
-        sendEmail(pdfFile);
-      } else if (get("Mailed", row).isEmpty() && "x".equals(get("RM", row))) {
+      if (email.isEmpty() || !"x".equals(get("RM", row))) {
+        addToPrint(pdfFile);
+      } else if (get("Mailed", row).isEmpty()) {
         return sendEmail(row, pdfFile);
       }
     } catch (Exception e) {
@@ -171,7 +173,7 @@ public class Billing implements AutoCloseable {
     return Collections.emptyMap();
   }
 
-  void sendEmail(Path pdfFile) throws IOException {
+  void addToPrint(Path pdfFile) throws IOException {
     try (InputStream in = newInputStream(pdfFile)) {
       if (pdfConcatenated == null) {
         pdfConcatenated = new PdfDocument(
@@ -232,7 +234,7 @@ public class Billing implements AutoCloseable {
     return paymentPartReceipt.getData();
   }
 
-  private Object getTypeValue(Map<String, Object> row, String key, Class<?> valueType) {
+  Object getTypeValue(Map<String, Object> row, String key, Class<?> valueType) {
     String value = get(key, row);
     if (String.class.equals(valueType)) {
       return value;
@@ -254,43 +256,58 @@ public class Billing implements AutoCloseable {
   void readBillingInformation(Path rechnungsListeOds,
       Function<Map<String, Object>, Map<String, Object>> rowFunction) throws Exception {
     final AtomicBoolean hasChanged = new AtomicBoolean();
-    SpreadSheet spreadSheet = SpreadSheet.createFromFile(rechnungsListeOds.toFile());
-    try {
-      Sheet sheet = spreadSheet.getSheet(0);
+    OdfSpreadsheetDocument doc = null;
+    try (InputStream in = newInputStream(rechnungsListeOds)) {
+      doc = OdfSpreadsheetDocument.loadDocument(in);
+      OdfTable table = doc.getTableByName("Rechnungsliste");
       List<String> keys = new ArrayList<>();
       final Map<String, Integer> columnNameMap = new HashMap<>();
-      for (int x = 0, mx = sheet.getColumnCount(); x < mx; x++) {
-        String keyName = sheet.getCellAt(x, 0).getTextValue();
+      for (int x = 0, mx = table.getColumnCount(); x < mx; x++) {
+        String keyName = table.getCellByPosition(x, 0).getStringValue();
         if (keyName.isEmpty()) {
           break;
         }
         keys.add(keyName);
         columnNameMap.put(keyName, Integer.valueOf(x));
       }
-      for (int y = 1, n = sheet.getRowCount(); y < n; y++) {
-        String anrede = sheet.getCellAt(0, y).getTextValue();
+      for (int y = 1, n = table.getRowCount(); y < n; y++) {
+        String anrede = table.getCellByPosition(0, y).getStringValue();
         if (anrede.isEmpty()) {
           break;
         }
         Map<String, Object> rowValues = new LinkedHashMap<>();
         rowValues.put(keys.get(0), anrede);
         for (int x = 1, mx = keys.size(); x < mx; x++) {
-          rowValues.put(keys.get(x), sheet.getCellAt(x, y).getTextValue());
+          rowValues.put(keys.get(x), table.getCellByPosition(x, y).getStringValue());
         }
         final int row = y;
         Map<String, Object> changedRows = rowFunction.apply(rowValues);
         changedRows.forEach((key, value) -> {
           Integer col = columnNameMap.get(key);
           if (col != null) {
-            sheet.setValueAt(value, col.intValue(), row);
+            setCellValue(table.getCellByPosition(col.intValue(), row), value);
             hasChanged.set(true);
           }
         });
       }
-    } finally {
-      if (hasChanged.get()) {
-        spreadSheet.saveAs(dataDir.resolve("Rechnungsliste_Budget_new.ods").toFile());
+    }
+    if (doc != null && hasChanged.get()) {
+      try (OutputStream out = newOutputStream(dataDir.resolve("Rechnungsliste_Budget_new.ods"))) {
+        doc.save(out);
       }
+    }
+  }
+
+  void setCellValue(OdfTableCell cell, Object value) {
+    if (value instanceof Date) {
+      Calendar cal = Calendar.getInstance();
+      cal.setTime((Date) value);
+      cell.setDateValue(cal);
+    } else if (value instanceof String) {
+      cell.setStringValue((String) value);
+    } else {
+      logger.warn("Value type {} converted to string....", value.getClass().getName());
+      cell.setStringValue(value.toString());
     }
   }
 
