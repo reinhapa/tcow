@@ -1,7 +1,5 @@
 package net.reini.tcow;
 
-import static com.sun.mail.smtp.SMTPMessage.NOTIFY_FAILURE;
-import static com.sun.mail.smtp.SMTPMessage.RETURN_HDRS;
 import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.exists;
@@ -52,7 +50,6 @@ import com.itextpdf.forms.PdfPageFormCopier;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
-import com.sun.mail.smtp.SMTPMessage;
 
 import ch.codeblock.qrinvoice.FontFamily;
 import ch.codeblock.qrinvoice.OutputFormat;
@@ -71,6 +68,7 @@ import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMessage.RecipientType;
 import jakarta.mail.internet.MimeMultipart;
 import jakarta.mail.util.ByteArrayDataSource;
@@ -334,9 +332,7 @@ public class Billing implements AutoCloseable {
     attachment.setFileName(RECHNUNG + ".pdf");
     mp.addBodyPart(attachment);
 
-    SMTPMessage msg = new SMTPMessage(mailSession);
-    msg.setReturnOption(RETURN_HDRS);
-    msg.setNotifyOptions(NOTIFY_FAILURE);
+    MimeMessage msg = new MimeMessage(mailSession);
     msg.setFrom(sender);
     msg.addRecipient(RecipientType.TO, recipient);
     if (!email2.isEmpty()) {
