@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.12.2.final using JasperReports Library version 6.12.2-75c5e90a222ab406e416cbf590a5397028a52de3  -->
+<!-- Created with Jaspersoft Studio version 6.20.0.final using JasperReports Library version 6.20.0-2bc7ab61c56f459e8176eb05c7705e145cd400ad  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Blank_A4" pageWidth="595" pageHeight="842" columnWidth="454" leftMargin="85" rightMargin="56" topMargin="85" bottomMargin="0" uuid="5928660d-be86-4f6e-99b6-b5940c10aa28">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<property name="com.jaspersoft.studio.unit." value="mm"/>
@@ -91,7 +91,7 @@ Flüelistrasse 63
 					<font fontName="DejaVu Sans" size="10"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Hallo " + $F{Vorname} + ",\n\n" +
-"Mit dem neuen Jahr wird einmal mehr der Beitrag für das Luftabo des Jahres " + DATEFORMAT(NOW(), "yyyy") +  " zur Zahlung fällig.\n\n" +
+"Der Beitrag für das Luftabo des Jahres " + DATEFORMAT(NOW(), "yyyy") +  " ist zur Zahlung fällig.\n\n" +
 "Der aktuell geltende Betrag lautet wie folgt:"]]></textFieldExpression>
 			</textField>
 		</band>
@@ -103,8 +103,8 @@ Flüelistrasse 63
 					<font fontName="DejaVu Sans" size="10"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Hallo " + $F{Vorname} + ",\n\n" +
-"Wieder hat ein neues Vereinsjahr begonnen und der Beitrag für das Jahr " + DATEFORMAT(NOW(), "yyyy") +  " ist fällig.\n\n" +
-"Darf ich Dich bitten, den folgenden Beitrag innerhalb von 30 Tagen einzuzahlen und somit dem Verein zu helfen, seine Tätigkeiten aufrecht zu erhalten."]]></textFieldExpression>
+"Der Beitrag für das Vereinsjahr Jahr " + DATEFORMAT(NOW(), "yyyy") +  " ist zur Zahlung fällig.\n\n" +
+"Darf ich Dich bitten, den folgenden Beitrag innerhalb von 30 Tagen einzuzahlen."]]></textFieldExpression>
 			</textField>
 		</band>
 		<band height="17">
@@ -129,42 +129,22 @@ Flüelistrasse 63
 				<textFieldExpression><![CDATA["CHF  " + $F{Betrag}]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="47">
-			<printWhenExpression><![CDATA[$F{Typ}==3]]></printWhenExpression>
+		<band height="35">
 			<staticText>
-				<reportElement x="0" y="7" width="450" height="40" uuid="b0835b28-6b52-4c65-8ed2-44642155392c"/>
+				<reportElement x="0" y="7" width="450" height="28" uuid="b0835b28-6b52-4c65-8ed2-44642155392c"/>
 				<textElement>
 					<font fontName="DejaVu Sans" size="10"/>
 				</textElement>
-				<text><![CDATA[Darf ich Dich bitten, Deinen Beitrag innerhalb von 30 Tagen einzuzahlen und das Bezahlen am Postschalter zu vermeiden, da dadurch zusätzliche Gebühren für den Verein anfallen, welche wir vermeiden möchten.
-
-Für eine pünktliche Bezahlung danke ich Dir bestens.
-
-]]></text>
+				<text><![CDATA[Vermeide bitte nach Möglichleit das Bezahlen am Postschalter, da dadurch zusätzliche Gebühren für den Verein anfallen.]]></text>
 			</staticText>
 		</band>
-		<band height="70">
-			<printWhenExpression><![CDATA[$F{Typ}!=3]]></printWhenExpression>
+		<band height="111">
 			<staticText>
-				<reportElement x="0" y="6" width="450" height="64" uuid="47932412-d76d-4b83-9827-f4e2ccf6d4f8"/>
+				<reportElement x="0" y="9" width="300" height="96" uuid="48356312-19a5-46ad-8ec8-b21f8fdb1fe3"/>
 				<textElement>
 					<font fontName="DejaVu Sans" size="10"/>
 				</textElement>
-				<text><![CDATA[Vermeide bitte nach Möglichleit das Bezahlen am Postschalter, da dadurch zusätzliche Gebühren für den Verein anfallen, welche wir vermeiden möchten.
-
-Ich wünsche Dir im neuen Jahr viele tolle Tauchgänge und freue mich, Dich im Namen des Vorstands an möglichst vielen Anlässen zu begrüssen.
-
-Genauere Informationen über die geplanten Anlässe sind auf unserer Webseite www.tcow.ch verfügbar.
-]]></text>
-			</staticText>
-		</band>
-		<band height="102">
-			<staticText>
-				<reportElement x="0" y="4" width="155" height="96" uuid="48356312-19a5-46ad-8ec8-b21f8fdb1fe3"/>
-				<textElement>
-					<font fontName="DejaVu Sans" size="10"/>
-				</textElement>
-				<text><![CDATA[Viu Griäss und guet Luft
+				<text><![CDATA[Für eine pünktliche Bezahlung danke ich Dir bestens.
 
 
 
@@ -174,7 +154,7 @@ Patrick Reinhart
 Kassier Tauchclub Obwalden]]></text>
 			</staticText>
 			<image>
-				<reportElement x="1" y="18" width="152" height="50" uuid="0c8d5df4-9f73-4217-a50e-cd79f9c371a2"/>
+				<reportElement x="1" y="25" width="152" height="50" uuid="0c8d5df4-9f73-4217-a50e-cd79f9c371a2"/>
 				<imageExpression><![CDATA["SignaturPatrick.jpg"]]></imageExpression>
 			</image>
 		</band>

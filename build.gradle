@@ -1,9 +1,9 @@
 plugins {
     id 'java'
     id 'application'
-    id 'com.github.ben-manes.versions' version '0.42.0'
-    id 'net.nemerosa.versioning' version '2.15.1'
-    id 'org.owasp.dependencycheck' version '7.0.4.1'
+    id 'com.github.ben-manes.versions' version '0.43.0'
+    id 'net.nemerosa.versioning' version '3.0.0'
+    id 'org.owasp.dependencycheck' version '7.3.0'
 }
 
 mainClassName = 'net.reini.tcow.TcowReport'
@@ -21,25 +21,25 @@ jar {
 
 dependencies {
     implementation 'bouncycastle:bcprov-jdk14:140'
-    implementation 'ch.codeblock.qrinvoice.core:qrinvoice-core:1.13'
-    implementation 'ch.codeblock.qrinvoice.openpdf:qrinvoice-openpdf:1.13'
-    implementation 'com.itextpdf:forms:7.2.1'
-    implementation 'com.itextpdf:kernel:7.2.1'
+    implementation 'ch.codeblock.qrinvoice.core:qrinvoice-core:1.16'
+    implementation 'ch.codeblock.qrinvoice.openpdf:qrinvoice-openpdf:1.16'
+    implementation 'com.itextpdf:forms:7.2.4'
+    implementation 'com.itextpdf:kernel:7.2.4'
     implementation 'com.lowagie:itext:2.1.7'
     implementation 'jakarta.mail:jakarta.mail-api:2.1.0'
-    implementation 'net.sf.jasperreports:jasperreports-functions:6.19.1'
-//    implementation 'net.sf.jasperreports:jasperreports-metadata:6.19.1'
-    implementation 'net.sf.jasperreports:jasperreports:6.19.1'
-    implementation 'org.eclipse.angus:all:1.0.0'
-    implementation 'org.odftoolkit:odfdom-java:1.0.0-BETA1'
-    implementation 'org.slf4j:slf4j-api:1.7.36'
-    
-    runtimeOnly 'ch.qos.logback:logback-classic:1.2.11'
-    runtimeOnly 'ch.qos.logback:logback-core:1.2.11'
-    
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-    testRuntimeOnly 'org.junit.platform:junit-platform-runner:1.8.2'
+    implementation 'net.sf.jasperreports:jasperreports-functions:6.20.0'
+//    implementation 'net.sf.jasperreports:jasperreports-metadata:6.20.0'
+    implementation 'net.sf.jasperreports:jasperreports:6.20.0'
+    implementation 'org.odftoolkit:odfdom-java:0.10.0'
+    implementation 'org.slf4j:slf4j-api:2.0.3'
+
+    runtimeOnly 'ch.qos.logback:logback-classic:1.4.4'
+    runtimeOnly 'ch.qos.logback:logback-core:1.4.4'
+    runtimeOnly 'org.eclipse.angus:jakarta.mail:1.0.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-runner:1.9.1'
 }
 
 dependencyUpdates.resolutionStrategy {

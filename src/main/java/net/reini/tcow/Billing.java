@@ -83,12 +83,12 @@ public class Billing implements AutoCloseable {
   private static final String RECHNUNG = "Rechnung";
 
   public static void main(String[] args) {
-    int argsLength = args.length;
+    final int argsLength = args.length;
     if (argsLength > 0) {
-      Path dataDir = Paths.get(args[0]);
+      final Path dataDir = Paths.get(args[0]);
       try (Billing billing = new Billing(dataDir)) {
         if (argsLength > 1) {
-          Map<String, Object> row = new HashMap<>();
+          final Map<String, Object> row = new HashMap<>();
           row.put("Bezahlt", "");
           row.put("Mailed", "");
           row.put("Email", args[1]);
@@ -160,7 +160,7 @@ public class Billing implements AutoCloseable {
         createPdf(pdfFile, row);
       }
       String email = get("Email", row);
-      if (email.isEmpty() || !"x".equals(get("RM", row))) {
+      if (email.isEmpty() || !"x".equalsIgnoreCase(get("RM", row))) {
         addToPrint(pdfFile);
       } else if (get("Mailed", row).isEmpty()) {
         return sendEmail(row, pdfFile);
@@ -216,8 +216,6 @@ public class Billing implements AutoCloseable {
             .country("CH") //
         ) //
         .paymentReference(r -> r //
-            // .referenceType(ReferenceType.QR_REFERENCE) //
-            // .reference(QRReferenceUtils.createQrReference(get("R#", row))) //
             .referenceType(ReferenceType.CREDITOR_REFERENCE) //
             .reference(CreditorReferenceUtils.createCreditorReference(get("R#", row))))
         .build(); //
