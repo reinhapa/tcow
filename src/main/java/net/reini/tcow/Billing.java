@@ -159,7 +159,7 @@ public class Billing implements AutoCloseable {
         row.put("QrInvoice", Base64.getEncoder().encodeToString(createQrInvoice(row)));
         createPdf(pdfFile, row);
       }
-      String email = get("Email", row);
+      String email = ""; //get("Email", row);
       if (email.isEmpty() || !"x".equalsIgnoreCase(get("RM", row))) {
         addToPrint(pdfFile);
       } else if (get("Mailed", row).isEmpty()) {
