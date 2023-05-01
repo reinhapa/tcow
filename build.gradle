@@ -36,7 +36,7 @@ dependencies {
     implementation 'com.itextpdf:forms:7.2.5'
     implementation 'com.itextpdf:kernel:7.2.5'
     implementation 'jakarta.mail:jakarta.mail-api:2.1.1'
-    implementation 'net.sf.jasperreports:jasperreports-functions:6.20.3'
+    implementation 'net.sf.jasperreports:jasperreports-functions:6.20.4'
 //    implementation 'net.sf.jasperreports:jasperreports-metadata:6.20.0'
     implementation 'net.sf.jasperreports:jasperreports:6.20.3'
     implementation 'org.odftoolkit:odfdom-java:0.11.0'
