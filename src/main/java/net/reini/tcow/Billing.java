@@ -46,10 +46,10 @@ import org.odftoolkit.odfdom.doc.table.OdfTableCell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.itextpdf.forms.PdfPageFormCopier;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfReader;
-import com.itextpdf.kernel.pdf.PdfWriter;
+import com.lowagie.text.Document;
+import com.lowagie.text.pdf.PdfCopy;
+import com.lowagie.text.pdf.PdfImportedPage;
+import com.lowagie.text.pdf.PdfReader;
 
 import ch.codeblock.qrinvoice.FontFamily;
 import ch.codeblock.qrinvoice.OutputFormat;
@@ -80,7 +80,34 @@ import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 
 public class Billing implements AutoCloseable {
+  private static final Logger LOGGER = LoggerFactory.getLogger(Billing.class);
   private static final String RECHNUNG = "Rechnung";
+
+  private final LocalDateTime date;
+  private final Session mailSession;
+  private final DateTimeFormatter dateFormatter;
+  private final DateTimeFormatter yearFormatter;
+  private final Path dataDir;
+  private final InternetAddress sender;
+  private final Pattern replacementPattern;
+  private final Properties mailProperties;
+  private final Properties creditorProperties;
+
+  private Document pdfConcatenated;
+  private PdfCopy pdfCopy;
+
+  public Billing(Path dataDir) throws IOException {
+    this.dataDir = dataDir;
+    date = LocalDateTime.now();
+    dateFormatter = ofPattern("dd.MM.yyyy", Locale.GERMAN);
+    yearFormatter = ofPattern("yyyy", Locale.GERMAN);
+    replacementPattern = Pattern.compile("\\$\\{([\\w]+)\\}");
+    creditorProperties = loadProperties(Paths.get("creditor.properties"));
+    mailProperties = loadProperties(Paths.get("mail.properties"));
+    sender = new InternetAddress(creditorProperties.getProperty("senderAddress"),
+        creditorProperties.getProperty("senderName"));
+    mailSession = Session.getDefaultInstance(mailProperties);
+  }
 
   public static void main(String[] args) {
     final int argsLength = args.length;
@@ -109,44 +136,27 @@ public class Billing implements AutoCloseable {
     }
   }
 
-  private final Logger logger;
-  private final LocalDateTime date;
-  private final Session mailSession;
-  private final DateTimeFormatter dateFormatter;
-  private final DateTimeFormatter yearFormatter;
-  private final Path dataDir;
-  private final InternetAddress sender;
-  private final Pattern replacementPattern;
-  private final Properties mailProperties;
-  private final PdfPageFormCopier formCopier;
-
-  private PdfDocument pdfConcatenated;
-
-  public Billing(Path dataDir) throws IOException {
-    this.dataDir = dataDir;
-    logger = LoggerFactory.getLogger(getClass());
-    date = LocalDateTime.now();
-    dateFormatter = ofPattern("dd.MM.yyyy", Locale.GERMAN);
-    yearFormatter = ofPattern("yyyy", Locale.GERMAN);
-    sender = new InternetAddress("patrick@reini.net", "Patrick Reinhart");
-    replacementPattern = Pattern.compile("\\$\\{([\\w]+)\\}");
-    mailProperties = new Properties();
-    formCopier = new PdfPageFormCopier();
-    Path mailPropertiesFile = Paths.get("mail.properties");
-    if (exists(mailPropertiesFile)) {
-      try (InputStream in = newInputStream(mailPropertiesFile)) {
-        mailProperties.load(in);
+  static Properties loadProperties(Path propertiesFile) {
+    final Properties properties = new Properties();
+    if (exists(propertiesFile)) {
+      try (InputStream in = newInputStream(propertiesFile)) {
+        properties.load(in);
+      } catch (IOException e) {
+        LOGGER.info("{} failed to read. Using defaults.", propertiesFile, e);
       }
     } else {
-      logger.info("{} not available. Using defaults.", mailPropertiesFile);
+      LOGGER.info("{} not available. Using defaults.", propertiesFile);
     }
-    mailSession = Session.getDefaultInstance(mailProperties);
+    return properties;
   }
 
   @Override
   public void close() throws Exception {
     if (pdfConcatenated != null) {
       pdfConcatenated.close();
+    }
+    if (pdfCopy != null) {
+      pdfCopy.close();
     }
   }
 
@@ -159,35 +169,45 @@ public class Billing implements AutoCloseable {
         row.put("QrInvoice", Base64.getEncoder().encodeToString(createQrInvoice(row)));
         createPdf(pdfFile, row);
       }
-      String email = ""; //get("Email", row);
+      String email = ""; // get("Email", row);
       if (email.isEmpty() || !"x".equalsIgnoreCase(get("RM", row))) {
         addToPrint(pdfFile);
       } else if (get("Mailed", row).isEmpty()) {
         return sendEmail(row, pdfFile);
       }
     } catch (Exception e) {
-      logger.error("Error processing PDF", e);
+      LOGGER.error("Error processing PDF", e);
     }
     return Collections.emptyMap();
   }
 
   void addToPrint(Path pdfFile) throws IOException {
-    try (InputStream in = newInputStream(pdfFile)) {
+    try (InputStream in = newInputStream(pdfFile); PdfReader pdfReader = new PdfReader(in)) {
       if (pdfConcatenated == null) {
-        pdfConcatenated = new PdfDocument(
-            new PdfWriter(newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf"))));
+        pdfConcatenated = new Document();
       }
-      try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(in))) {
-        pdfDocument.copyPagesTo(1, pdfDocument.getNumberOfPages(), pdfConcatenated, formCopier);
+      if (pdfCopy == null) {
+        pdfCopy = new PdfCopy(pdfConcatenated,
+            newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf")));
       }
+      pdfConcatenated.open();
+      for (int pagetIndex = 1,
+          totalPages = pdfReader.getNumberOfPages(); pagetIndex <= totalPages; pagetIndex++) {
+        // grab page from input document
+        PdfImportedPage page = pdfCopy.getImportedPage(pdfReader, pagetIndex);
+        // add content to target PDF
+        pdfCopy.addPage(page);
+      }
+      pdfCopy.freeReader(pdfReader);
     }
   }
 
   void createPdf(Path pdfFile, Map<String, Object> row) throws IOException, JRException {
-    logger.info("Creating PDF {}", pdfFile);
+    LOGGER.info("Creating PDF {}", pdfFile);
     try (OutputStream pdfOut = newOutputStream(pdfFile)) {
       JasperReport jasperReport = JasperCompileManager.compileReport("report.jrxml");
-      JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<>(),
+      HashMap<String, Object> parameters = new HashMap<>();
+      JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters,
           new SingleRowDataSource((key, valueType) -> getTypeValue(row, key, valueType)));
       JasperExportManager.exportReportToPdfStream(jasperPrint, pdfOut);
     }
@@ -195,16 +215,16 @@ public class Billing implements AutoCloseable {
 
   byte[] createQrInvoice(Map<String, Object> row) {
     final QrInvoice qrInvoice = QrInvoiceBuilder.create() //
-        .creditorIBAN("CH92 8080 8005 2401 3817 1") // CH44 3199 9123 0008 8901 2
+        .creditorIBAN(creditorProperties.getProperty("creditorIBAN", "CH5204835012345671000"))
         .paymentAmountInformation(p -> p.chf(new BigDecimal(get("Betrag", row)))) //
         .creditor(c -> c //
             .structuredAddress() //
-            .name("Tauchclub Obwalden") //
-            .streetName("Flüelistrasse") //
-            .houseNumber("63") //
-            .postalCode("6064") //
-            .city("Kerns") //
-            .country("CH") //
+            .name(creditorProperties.getProperty("name", "Max Muster & Söhne")) //
+            .streetName(creditorProperties.getProperty("streetName", "Musterstrasse")) //
+            .houseNumber(creditorProperties.getProperty("houseNumber", "123")) //
+            .postalCode(creditorProperties.getProperty("houseNumber", "8000")) //
+            .city(creditorProperties.getProperty("city", "Seldwyla")) //
+            .country(creditorProperties.getProperty("country", "CH")) //
         ) //
         .ultimateDebtor(d -> d //
             .structuredAddress() //
@@ -302,7 +322,7 @@ public class Billing implements AutoCloseable {
     } else if (value instanceof String) {
       cell.setStringValue((String) value);
     } else {
-      logger.warn("Value type {} converted to string....", value.getClass().getName());
+      LOGGER.warn("Value type {} converted to string....", value.getClass().getName());
       cell.setStringValue(value.toString());
     }
   }
@@ -338,7 +358,7 @@ public class Billing implements AutoCloseable {
     }
     msg.setSubject("TCOW Jahresbeitrag ".concat(get("Jahr", row)));
     msg.setContent(mp);
-    logger.info("Sending document to {}", recipient);
+    LOGGER.info("Sending document to {}", recipient);
     Transport.send(msg, mailProperties.getProperty("mail.user"),
         mailProperties.getProperty("mail.password"));
     Instant instant = date.toLocalDate().atStartOfDay().atZone(ZoneId.of("UTC")).toInstant();
