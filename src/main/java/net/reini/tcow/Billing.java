@@ -222,7 +222,7 @@ public class Billing implements AutoCloseable {
             .name(creditorProperties.getProperty("name", "Max Muster & Söhne")) //
             .streetName(creditorProperties.getProperty("streetName", "Musterstrasse")) //
             .houseNumber(creditorProperties.getProperty("houseNumber", "123")) //
-            .postalCode(creditorProperties.getProperty("houseNumber", "8000")) //
+            .postalCode(creditorProperties.getProperty("postalCode", "8000")) //
             .city(creditorProperties.getProperty("city", "Seldwyla")) //
             .country(creditorProperties.getProperty("country", "CH")) //
         ) //
