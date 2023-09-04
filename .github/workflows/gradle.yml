@@ -18,7 +18,7 @@ jobs:
         jdk: ['17', '20']
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up JDK ${{ matrix.jdk }}
       uses: actions/setup-java@v3
       with:
@@ -40,7 +40,7 @@ jobs:
 #    runs-on: ubuntu-latest
 #    name: Deploy
 #    steps:
-#    - uses: actions/checkout@v3
+#    - uses: actions/checkout@v4
 #    - name: Set up JDK
 #      uses: actions/setup-java@v3
 #      with:
