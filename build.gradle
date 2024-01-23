@@ -24,7 +24,7 @@ dependencies {
     implementation 'bouncycastle:bcprov-jdk14:140'
     implementation 'ch.codeblock.qrinvoice.core:qrinvoice-core:1.17'
     implementation 'ch.codeblock.qrinvoice.openpdf:qrinvoice-openpdf:1.19'
-    implementation 'com.github.librepdf:openpdf:1.3.36'
+    implementation 'com.github.librepdf:openpdf:1.3.39'
     implementation 'jakarta.mail:jakarta.mail-api:2.1.2'
     implementation 'net.sf.jasperreports:jasperreports:6.21.0'
     implementation 'net.sf.jasperreports:jasperreports-functions:6.21.0'
