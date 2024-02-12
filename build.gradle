@@ -27,7 +27,7 @@ dependencies {
     implementation 'com.github.librepdf:openpdf:1.3.39'
     implementation 'jakarta.mail:jakarta.mail-api:2.1.2'
     implementation 'net.sf.jasperreports:jasperreports:6.21.0'
-    implementation 'net.sf.jasperreports:jasperreports-functions:6.21.0'
+    implementation 'net.sf.jasperreports:jasperreports-functions:6.21.2'
 //    implementation 'net.sf.jasperreports:jasperreports-metadata:6.20.5'
     implementation 'org.odftoolkit:odfdom-java:0.12.0'
     implementation 'org.slf4j:slf4j-api:2.0.12'
