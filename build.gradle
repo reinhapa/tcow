@@ -30,7 +30,7 @@ dependencies {
     implementation 'net.sf.jasperreports:jasperreports-functions:6.21.2'
 //    implementation 'net.sf.jasperreports:jasperreports-metadata:6.20.5'
     implementation 'org.odftoolkit:odfdom-java:0.12.0'
-    implementation 'org.slf4j:slf4j-api:2.0.12'
+    implementation 'org.slf4j:slf4j-api:2.0.13'
 
     runtimeOnly 'ch.qos.logback:logback-classic:1.5.5'
     runtimeOnly 'ch.qos.logback:logback-core:1.5.3'
