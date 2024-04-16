@@ -41,7 +41,7 @@
 					<font fontName="DejaVu Sans" size="11"/>
 				</textElement>
 				<text><![CDATA[Tauchclub Obwalden
-c/o Patrick Reinhart  
+c/o Patrick Reinhart
 Grund
 Flüelistrasse 63
 6064 Kerns]]></text>
@@ -53,7 +53,7 @@ Flüelistrasse 63
 				<textElement>
 					<font fontName="DejaVu Sans" size="11"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Anrede} + "\n" +  
+				<textFieldExpression><![CDATA[$F{Anrede} + "\n" +
  $F{Vorname} + " " + $F{Name} + "\n" +
  $F{Strasse} + " " + $F{Nr} + "\n" +
  $F{PLZ}  + " "  + $F{Ort}]]></textFieldExpression>
@@ -161,6 +161,10 @@ Kassier Tauchclub Obwalden]]></text>
 	</detail>
 	<lastPageFooter>
 		<band height="297">
+			<image>
+				<reportElement x="-85" y="-1" width="595" height="297" uuid="0b50496f-f261-4a8b-b57e-eca2365a8b0d"/>
+				<imageExpression><![CDATA[$F{QrInvoice}]]></imageExpression>
+			</image>
 			<textField>
 				<reportElement x="60" y="220" width="420" height="23" forecolor="#001BA1" uuid="7828cf1b-4ac4-468f-9a93-78c05948468c">
 					<printWhenExpression><![CDATA[$F{Bezahlt} != null]]></printWhenExpression>
@@ -170,10 +174,6 @@ Kassier Tauchclub Obwalden]]></text>
 				</textElement>
 				<textFieldExpression><![CDATA["Betrag erhalten am " + DATEFORMAT($F{Bezahlt},"dd. MMMM yyyy")]]></textFieldExpression>
 			</textField>
-			<image>
-				<reportElement x="-85" y="-1" width="595" height="297" uuid="0b50496f-f261-4a8b-b57e-eca2365a8b0d"/>
-				<imageExpression><![CDATA[$F{QrInvoice}]]></imageExpression>
-			</image>
 		</band>
 	</lastPageFooter>
 </jasperReport>
