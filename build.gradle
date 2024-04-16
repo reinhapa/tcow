@@ -33,7 +33,7 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.13'
 
     runtimeOnly 'ch.qos.logback:logback-classic:1.5.5'
-    runtimeOnly 'ch.qos.logback:logback-core:1.5.3'
+    runtimeOnly 'ch.qos.logback:logback-core:1.5.5'
     runtimeOnly 'org.eclipse.angus:jakarta.mail:2.0.3'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
