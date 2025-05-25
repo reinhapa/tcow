@@ -1,11 +1,10 @@
 plugins {
     id 'java'
     id 'application'
-    id 'com.github.ben-manes.versions' version '0.52.0'
-    id 'net.nemerosa.versioning' version '3.1.0'
-    id 'org.owasp.dependencycheck' version '12.1.1'
+    alias libs.plugins.ben.manes.versions
+    alias libs.plugins.nemerosa.versioning
+    alias libs.plugins.owasp.dependencycheck
 }
-
 
 java {
   sourceCompatibility = JavaVersion.VERSION_21
@@ -21,24 +20,24 @@ application {
 }
 
 dependencies {
-    implementation 'bouncycastle:bcprov-jdk14:140'
-    implementation 'ch.codeblock.qrinvoice.core:qrinvoice-core:1.20'
-    implementation 'ch.codeblock.qrinvoice.openpdf:qrinvoice-openpdf:1.20'
-    implementation 'com.github.librepdf:openpdf:2.0.3'
-    implementation 'jakarta.mail:jakarta.mail-api:2.1.3'
-    implementation 'net.sf.jasperreports:jasperreports:7.0.3'
-    implementation 'net.sf.jasperreports:jasperreports-functions:7.0.3'
-//    implementation 'net.sf.jasperreports:jasperreports-metadata:6.21.2'
-    implementation 'org.odftoolkit:odfdom-java:0.12.0'
-    implementation 'org.slf4j:slf4j-api:2.0.17'
+    implementation libs.bouncycastle.bcprov
+    implementation libs.qrinvoice.core
+    implementation libs.qrinvoice.openpdf
+    implementation libs.openpdf
+    implementation libs.jakarta.mail.api
+    implementation libs.jasper.reports
+    implementation libs.jasper.reports.functions
+    implementation libs.jasper.reports.metadata
+    implementation libs.odftoolkit
+    implementation libs.slf4j.api
 
-    runtimeOnly 'ch.qos.logback:logback-classic:1.5.18'
-    runtimeOnly 'ch.qos.logback:logback-core:1.5.18'
-    runtimeOnly 'org.eclipse.angus:jakarta.mail:2.0.3'
+    runtimeOnly libs.logback.classic
+    runtimeOnly libs.logback.core
+    runtimeOnly libs.angus.mail
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.12.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.12.2'
-    testRuntimeOnly 'org.junit.platform:junit-platform-runner:1.12.2'
+    testImplementation libs.junit.jupiter.api
+    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.junit.platform.runner
 }
 
 dependencyUpdates.resolutionStrategy {

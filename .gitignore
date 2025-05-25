@@ -1,7 +1,8 @@
 .classpath
-.settings
 .gradle
+.idea
 .project
+.settings
 bin
 build
 *.odt
