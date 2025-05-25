@@ -35,7 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -81,7 +81,10 @@ import net.sf.jasperreports.engine.JasperReport;
 
 public class Billing implements AutoCloseable {
   private static final Logger LOGGER = LoggerFactory.getLogger(Billing.class);
-  private static final String RECHNUNG = "Rechnung";
+  private static final String EMAIL = "Email";
+  private static final String INVOICE = "Rechnung";
+  private static final String MAILED = "Mailed";
+  private static final String PAYED = "Bezahlt";
 
   private final LocalDateTime date;
   private final Session mailSession;
@@ -101,7 +104,7 @@ public class Billing implements AutoCloseable {
     date = LocalDateTime.now();
     dateFormatter = ofPattern("dd.MM.yyyy", Locale.GERMAN);
     yearFormatter = ofPattern("yyyy", Locale.GERMAN);
-    replacementPattern = Pattern.compile("\\$\\{([\\w]+)\\}");
+    replacementPattern = Pattern.compile("\\$\\{([\\w]+)}");
     creditorProperties = loadProperties(Paths.get("creditor.properties"));
     mailProperties = loadProperties(Paths.get("mail.properties"));
     sender = new InternetAddress(creditorProperties.getProperty("senderAddress"),
@@ -116,9 +119,9 @@ public class Billing implements AutoCloseable {
       try (Billing billing = new Billing(dataDir)) {
         if (argsLength > 1) {
           final Map<String, Object> row = new HashMap<>();
-          row.put("Bezahlt", "");
-          row.put("Mailed", "");
-          row.put("Email", args[1]);
+          row.put(PAYED, "");
+          row.put(MAILED, "");
+          row.put(EMAIL, args[1]);
           for (int idx = 2; idx < argsLength; idx++) {
             String[] parts = args[idx].split("=", 2);
             row.put(parts[0], parts[1]);
@@ -162,8 +165,8 @@ public class Billing implements AutoCloseable {
 
   Map<String, Object> processDocument(Map<String, Object> row) {
     try {
-      Path pdfFile = createDirectories(dataDir.resolve(RECHNUNG + "en"))
-          .resolve(format("%s_%s_%s.pdf", RECHNUNG, get("Vorname", row), get("Name", row))
+      Path pdfFile = createDirectories(dataDir.resolve(INVOICE + "en"))
+          .resolve(format("%s_%s_%s.pdf", INVOICE, get("Vorname", row), get("Name", row))
               .replace(' ', '_'));
       if (!exists(pdfFile)) {
         row.put("QrInvoice", Base64.getEncoder().encodeToString(createQrInvoice(row)));
@@ -172,7 +175,7 @@ public class Billing implements AutoCloseable {
       String email = ""; // get("Email", row);
       if (email.isEmpty() || !"x".equalsIgnoreCase(get("RM", row))) {
         addToPrint(pdfFile);
-      } else if (get("Mailed", row).isEmpty()) {
+      } else if (get(MAILED, row).isEmpty()) {
         return sendEmail(row, pdfFile);
       }
     } catch (Exception e) {
@@ -182,13 +185,14 @@ public class Billing implements AutoCloseable {
   }
 
   void addToPrint(Path pdfFile) throws IOException {
-    try (InputStream in = newInputStream(pdfFile); PdfReader pdfReader = new PdfReader(in)) {
+    try (InputStream in = newInputStream(pdfFile);
+         PdfReader pdfReader = new PdfReader(in);
+         OutputStream out = newOutputStream(dataDir.resolve(INVOICE + "enToPrint.pdf"))) {
       if (pdfConcatenated == null) {
         pdfConcatenated = new Document();
       }
       if (pdfCopy == null) {
-        pdfCopy = new PdfCopy(pdfConcatenated,
-            newOutputStream(dataDir.resolve(RECHNUNG + "enToPrint.pdf")));
+        pdfCopy = new PdfCopy(pdfConcatenated, out);
       }
       pdfConcatenated.open();
       for (int pagetIndex = 1,
@@ -270,7 +274,7 @@ public class Billing implements AutoCloseable {
   }
 
   void readBillingInformation(Path rechnungsListeOds,
-      Function<Map<String, Object>, Map<String, Object>> rowFunction) throws Exception {
+      UnaryOperator<Map<String, Object>> rowFunction) throws Exception {
     final AtomicBoolean hasChanged = new AtomicBoolean();
     OdfSpreadsheetDocument doc = null;
     try (InputStream in = newInputStream(rechnungsListeOds)) {
@@ -315,12 +319,12 @@ public class Billing implements AutoCloseable {
   }
 
   void setCellValue(OdfTableCell cell, Object value) {
-    if (value instanceof Date) {
+    if (value instanceof Date dateValue) {
       Calendar cal = Calendar.getInstance();
-      cal.setTime((Date) value);
+      cal.setTime(dateValue);
       cell.setDateValue(cal);
-    } else if (value instanceof String) {
-      cell.setStringValue((String) value);
+    } else if (value instanceof String stringValue) {
+      cell.setStringValue(stringValue);
     } else {
       LOGGER.warn("Value type {} converted to string....", value.getClass().getName());
       cell.setStringValue(value.toString());
@@ -329,7 +333,7 @@ public class Billing implements AutoCloseable {
 
   Map<String, Object> sendEmail(Map<String, Object> row, Path pdfFile)
       throws MessagingException, IOException {
-    String email = get("Email", row);
+    String email = get(EMAIL, row);
     String email2 = get("Email2", row);
     String vorname = get("Vorname", row);
     String nachname = get("Name", row);
@@ -347,7 +351,7 @@ public class Billing implements AutoCloseable {
     MimeBodyPart attachment = new MimeBodyPart();
     DataSource source = new ByteArrayDataSource(readAllBytes(pdfFile), "application/pdf");
     attachment.setDataHandler(new DataHandler(source));
-    attachment.setFileName(RECHNUNG + ".pdf");
+    attachment.setFileName(INVOICE + ".pdf");
     mp.addBodyPart(attachment);
 
     MimeMessage msg = new MimeMessage(mailSession);
@@ -362,7 +366,7 @@ public class Billing implements AutoCloseable {
     Transport.send(msg, mailProperties.getProperty("mail.user"),
         mailProperties.getProperty("mail.password"));
     Instant instant = date.toLocalDate().atStartOfDay().atZone(ZoneId.of("UTC")).toInstant();
-    return Collections.singletonMap("Mailed", Date.from(instant));
+    return Collections.singletonMap(MAILED, Date.from(instant));
   }
 
   String getEmailBody(Map<String, Object> row) throws IOException {
@@ -373,7 +377,7 @@ public class Billing implements AutoCloseable {
   }
 
   String getEmailResource(Map<String, Object> row) {
-    if (get("Bezahlt", row).isEmpty()) {
+    if (get(PAYED, row).isEmpty()) {
       return "BillingEmailTemplate.txt";
     }
     return "BillPayedEmailTemplate.txt";
@@ -389,13 +393,9 @@ public class Billing implements AutoCloseable {
   }
 
   String get(String key, Map<String, Object> row) {
-    return String.valueOf(row.computeIfAbsent(key, k -> {
-      switch (k) {
-        case "Jahr":
-          return date.format(yearFormatter);
-        default:
-          return "<" + key + ">";
-      }
+    return String.valueOf(row.computeIfAbsent(key, k -> switch (k) {
+        case "Jahr" -> date.format(yearFormatter);
+        default -> "<" + k + ">";
     }));
   }
 }

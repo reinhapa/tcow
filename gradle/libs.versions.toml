@@ -7,7 +7,7 @@ jasper-reports = '7.0.3'
 junit-jupiter = '5.12.2'
 junit-platform-runner = '1.12.2'
 logback = '1.5.18'
-odftoolkit = '0.8.11-incubating'
+odftoolkit = '0.12.0'
 openpdf = '2.0.3'
 qrinvoice = '1.20'
 slf4j = '2.0.17'
@@ -27,7 +27,7 @@ junit-jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine', vers
 junit-platform-runner = { module = 'org.junit.platform:junit-platform-runner', version.ref = 'junit-platform-runner' }
 logback-classic = { module = 'ch.qos.logback:logback-classic', version.ref = 'logback' }
 logback-core = { module = 'ch.qos.logback:logback-core', version.ref = 'logback' }
-odftoolkit = { module = 'org.apache.odftoolkit:odfdom-java', version.ref = 'odftoolkit' }
+odftoolkit = { module = 'org.odftoolkit:odfdom-java', version.ref = 'odftoolkit' }
 openpdf = { module = 'com.github.librepdf:openpdf', version.ref = 'openpdf' }
 qrinvoice-core = { module = 'ch.codeblock.qrinvoice.core:qrinvoice-core', version.ref = 'qrinvoice' }
 qrinvoice-openpdf = { module = 'ch.codeblock.qrinvoice.openpdf:qrinvoice-openpdf', version.ref = 'qrinvoice' }
