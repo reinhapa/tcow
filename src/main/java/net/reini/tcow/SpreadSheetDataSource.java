@@ -25,7 +25,7 @@ public final class SpreadSheetDataSource implements JRDataSource {
   private int rowIndex;
 
   public SpreadSheetDataSource(OdfSpreadsheetDocument odfSpreadsheetDocument) {
-    table = odfSpreadsheetDocument.getTableList().get(0);
+    table = odfSpreadsheetDocument.getTableByName("Rechnungsliste");
     columnNameMap = new HashMap<>();
     for (int x = 0, mx = table.getColumnCount(); x < mx; x++) {
       String keyName = table.getCellByPosition(x, 0).getStringValue();
