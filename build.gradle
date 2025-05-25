@@ -10,6 +10,10 @@ java {
   sourceCompatibility = JavaVersion.VERSION_21
 }
 
+test {
+  useJUnitPlatform()
+}
+
 repositories {
     mavenCentral()
     mavenLocal()
@@ -28,6 +32,8 @@ dependencies {
     implementation libs.jasper.reports
     implementation libs.jasper.reports.functions
     implementation libs.jasper.reports.metadata
+    implementation libs.jasper.reports.jdt
+    implementation libs.jasper.reports.pdf
     implementation libs.odftoolkit
     implementation libs.slf4j.api
 
@@ -35,6 +41,7 @@ dependencies {
     runtimeOnly libs.logback.core
     runtimeOnly libs.angus.mail
 
+    testImplementation libs.assertj.core
     testImplementation libs.junit.jupiter.api
     testRuntimeOnly libs.junit.jupiter.engine
     testRuntimeOnly libs.junit.platform.runner

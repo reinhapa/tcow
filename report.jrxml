@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.20.0.final using JasperReports Library version 6.20.0-2bc7ab61c56f459e8176eb05c7705e145cd400ad  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Blank_A4" pageWidth="595" pageHeight="842" columnWidth="454" leftMargin="85" rightMargin="56" topMargin="85" bottomMargin="0" uuid="5928660d-be86-4f6e-99b6-b5940c10aa28">
+<!-- Created with Jaspersoft Studio version 7.0.0.final using JasperReports Library version 7.0.0-b478feaa9aab4375eba71de77b4ca138ad2f62aa  -->
+<jasperReport name="Blank_A4" language="java" pageWidth="595" pageHeight="842" columnWidth="454" leftMargin="85" rightMargin="56" topMargin="85" bottomMargin="0" uuid="5928660d-be86-4f6e-99b6-b5940c10aa28">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<property name="com.jaspersoft.studio.unit." value="mm"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="mm"/>
@@ -11,9 +10,7 @@
 	<property name="com.jaspersoft.studio.unit.rightMargin" value="mm"/>
 	<property name="com.jaspersoft.studio.unit.columnWidth" value="mm"/>
 	<property name="com.jaspersoft.studio.unit.columnSpacing" value="mm"/>
-	<queryString>
-		<![CDATA[]]>
-	</queryString>
+	<query language="sql"><![CDATA[]]></query>
 	<field name="Anrede" class="java.lang.String"/>
 	<field name="Vorname" class="java.lang.String"/>
 	<field name="Name" class="java.lang.String"/>
@@ -26,124 +23,73 @@
 	<field name="Typ" class="java.lang.Integer"/>
 	<field name="Bezahlt" class="java.util.Date"/>
 	<field name="QrInvoice" class="java.io.InputStream"/>
-	<background>
-		<band splitType="Stretch"/>
-	</background>
+	<background splitType="Stretch"/>
 	<detail>
 		<band height="222" splitType="Stretch">
-			<image>
-				<reportElement x="-18" y="-31" width="140" height="90" uuid="6f89eb30-48da-4918-a1f7-a54fd4d8fb19"/>
-				<imageExpression><![CDATA["tcowlogo.png"]]></imageExpression>
-			</image>
-			<staticText>
-				<reportElement x="0" y="73" width="197" height="80" uuid="7c5bfbe3-20a3-435e-bf6b-e26ae92efb77"/>
-				<textElement>
-					<font fontName="DejaVu Sans" size="11"/>
-				</textElement>
+			<element kind="image" uuid="6f89eb30-48da-4918-a1f7-a54fd4d8fb19" x="-18" y="-31" width="140" height="90">
+				<expression><![CDATA["tcowlogo.png"]]></expression>
+			</element>
+			<element kind="staticText" uuid="7c5bfbe3-20a3-435e-bf6b-e26ae92efb77" x="0" y="73" width="197" height="80" fontName="DejaVu Sans" fontSize="11.0">
 				<text><![CDATA[Tauchclub Obwalden
 c/o Patrick Reinhart
 Grund
 Flüelistrasse 63
 6064 Kerns]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="255" y="73" width="183" height="80" uuid="8a9da3a1-3228-4c69-abfa-2d69dd93a5a8">
-					<property name="com.jaspersoft.studio.unit.x" value="mm"/>
-				</reportElement>
-				<textElement>
-					<font fontName="DejaVu Sans" size="11"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{Anrede} + "\n" +
+			</element>
+			<element kind="textField" uuid="8a9da3a1-3228-4c69-abfa-2d69dd93a5a8" x="255" y="73" width="183" height="80" fontName="DejaVu Sans" fontSize="11.0">
+				<expression><![CDATA[$F{Anrede} + "\n" +
  $F{Vorname} + " " + $F{Name} + "\n" +
  $F{Strasse} + " " + $F{Nr} + "\n" +
- $F{PLZ}  + " "  + $F{Ort}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="0" y="161" width="450" height="17" uuid="1c6b1a5b-e703-4526-95d2-24f7286f726c"/>
-				<textElement>
-					<font fontName="DejaVu Sans" size="10"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Kerns, " + DATEFORMAT(NOW(),"dd. MMMM yyyy")]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="0" y="188" width="450" height="17" uuid="0f9c321e-0dfc-443a-8418-ae2314e9456a"/>
-				<textElement>
-					<font fontName="DejaVu Sans" size="12" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[($F{Typ}==3  ?  "Luftabo " :  "Mitgliederbeitrag ") + DATEFORMAT(NOW(), "YYYY")]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="255" y="56" width="183" height="11" uuid="f5c907eb-1d73-4726-97e0-c40d53e04b53"/>
+ $F{PLZ}  + " "  + $F{Ort}]]></expression>
+				<property name="com.jaspersoft.studio.unit.x" value="mm"/>
+			</element>
+			<element kind="textField" uuid="1c6b1a5b-e703-4526-95d2-24f7286f726c" x="0" y="161" width="450" height="17" fontName="DejaVu Sans" fontSize="10.0">
+				<expression><![CDATA["Kerns, " + DATEFORMAT(NOW(),"dd. MMMM yyyy")]]></expression>
+			</element>
+			<element kind="textField" uuid="0f9c321e-0dfc-443a-8418-ae2314e9456a" x="0" y="188" width="450" height="17" fontName="DejaVu Sans" fontSize="12.0" bold="true">
+				<expression><![CDATA[($F{Typ}==3  ?  "Luftabo " :  "Mitgliederbeitrag ") + DATEFORMAT(NOW(), "YYYY")]]></expression>
+			</element>
+			<element kind="staticText" uuid="f5c907eb-1d73-4726-97e0-c40d53e04b53" x="255" y="56" width="183" height="11" fontName="DejaVu Sans" fontSize="6.0">
+				<text><![CDATA[Tauchclub Obwalden, Flüelistrasse 63, 6064 Kerns]]></text>
 				<box>
 					<bottomPen lineWidth="1.0"/>
 				</box>
-				<textElement>
-					<font fontName="DejaVu Sans" size="6"/>
-				</textElement>
-				<text><![CDATA[Tauchclub Obwalden, Flüelistrasse 63, 6064 Kerns]]></text>
-			</staticText>
+			</element>
 		</band>
 		<band height="48" splitType="Stretch">
 			<printWhenExpression><![CDATA[$F{Typ}==3]]></printWhenExpression>
-			<textField>
-				<reportElement x="0" y="0" width="450" height="48" uuid="a3f03827-a73b-4ad7-8475-2346fbf5bfa8"/>
-				<textElement>
-					<font fontName="DejaVu Sans" size="10"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Hallo " + $F{Vorname} + ",\n\n" +
+			<element kind="textField" uuid="a3f03827-a73b-4ad7-8475-2346fbf5bfa8" x="0" y="0" width="450" height="48" fontName="DejaVu Sans" fontSize="10.0">
+				<expression><![CDATA["Hallo " + $F{Vorname} + ",\n\n" +
 "Der Beitrag für das Luftabo des Jahres " + DATEFORMAT(NOW(), "yyyy") +  " ist zur Zahlung fällig.\n\n" +
-"Der aktuell geltende Betrag lautet wie folgt:"]]></textFieldExpression>
-			</textField>
+"Der aktuell geltende Betrag lautet wie folgt:"]]></expression>
+			</element>
 		</band>
 		<band height="40">
 			<printWhenExpression><![CDATA[$F{Typ}!=3]]></printWhenExpression>
-			<textField>
-				<reportElement stretchType="ContainerHeight" x="0" y="0" width="450" height="40" uuid="96b17a48-dd3e-41c0-9bd5-0c923e96368b"/>
-				<textElement>
-					<font fontName="DejaVu Sans" size="10"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Hallo " + $F{Vorname} + ",\n\n" +
-"Der Beitrag für das Vereinsjahr Jahr " + DATEFORMAT(NOW(), "yyyy") +  " ist zur Zahlung fällig.\n\n" +
-"Darf ich Dich bitten, den folgenden Beitrag innerhalb von 30 Tagen einzuzahlen."]]></textFieldExpression>
-			</textField>
+			<element kind="textField" uuid="96b17a48-dd3e-41c0-9bd5-0c923e96368b" stretchType="ContainerHeight" x="0" y="0" width="450" height="40" fontName="DejaVu Sans" fontSize="10.0">
+				<expression><![CDATA["Hallo " + $F{Vorname} + ",\n\n" +
+"Der Beitrag für das Vereinsjahr Jahr " + DATEFORMAT(NOW(), "yyyy") +  " ist zur Zahlung in den nächsten 30 Tagen fällig.\n\n" +
+"Darf ich Dich bitten, den folgenden Beitrag innerhalb von 30 Tagen einzuzahlen."]]></expression>
+			</element>
 		</band>
 		<band height="17">
-			<rectangle>
-				<reportElement x="0" y="0" width="450" height="17" backcolor="#E6E6E6" uuid="2b0dce8e-7f88-43c2-961c-85fac91b8029"/>
-				<graphicElement>
-					<pen lineWidth="0.25" lineStyle="Solid"/>
-				</graphicElement>
-			</rectangle>
-			<textField>
-				<reportElement x="5" y="0" width="250" height="17" uuid="54fb8893-a6cf-4554-af2a-7ce80d69ff9a"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="10"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{Bezeichnung}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="320" y="0" width="130" height="17" uuid="270c868a-e26a-4660-b2b0-7516dd12babc"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="10"/>
-				</textElement>
-				<textFieldExpression><![CDATA["CHF  " + $F{Betrag}]]></textFieldExpression>
-			</textField>
+			<element kind="rectangle" uuid="2b0dce8e-7f88-43c2-961c-85fac91b8029" x="0" y="0" width="450" height="17" backcolor="#E6E6E6">
+				<pen lineWidth="0.25" lineStyle="Solid"/>
+			</element>
+			<element kind="textField" uuid="54fb8893-a6cf-4554-af2a-7ce80d69ff9a" x="5" y="0" width="250" height="17" fontName="DejaVu Sans" fontSize="10.0" vTextAlign="Middle">
+				<expression><![CDATA[$F{Bezeichnung}]]></expression>
+			</element>
+			<element kind="textField" uuid="270c868a-e26a-4660-b2b0-7516dd12babc" x="320" y="0" width="130" height="17" fontName="DejaVu Sans" fontSize="10.0" vTextAlign="Middle">
+				<expression><![CDATA["CHF  " + $F{Betrag}]]></expression>
+			</element>
 		</band>
 		<band height="35">
-			<staticText>
-				<reportElement x="0" y="7" width="450" height="28" uuid="b0835b28-6b52-4c65-8ed2-44642155392c"/>
-				<textElement>
-					<font fontName="DejaVu Sans" size="10"/>
-				</textElement>
+			<element kind="staticText" uuid="b0835b28-6b52-4c65-8ed2-44642155392c" x="0" y="7" width="450" height="28" fontName="DejaVu Sans" fontSize="10.0">
 				<text><![CDATA[Vermeide bitte nach Möglichleit das Bezahlen am Postschalter, da dadurch zusätzliche Gebühren für den Verein anfallen.]]></text>
-			</staticText>
+			</element>
 		</band>
 		<band height="111">
-			<staticText>
-				<reportElement x="0" y="9" width="300" height="96" uuid="48356312-19a5-46ad-8ec8-b21f8fdb1fe3"/>
-				<textElement>
-					<font fontName="DejaVu Sans" size="10"/>
-				</textElement>
+			<element kind="staticText" uuid="48356312-19a5-46ad-8ec8-b21f8fdb1fe3" x="0" y="9" width="300" height="96" fontName="DejaVu Sans" fontSize="10.0">
 				<text><![CDATA[Für eine pünktliche Bezahlung danke ich Dir bestens.
 
 
@@ -152,28 +98,19 @@ Flüelistrasse 63
 
 Patrick Reinhart
 Kassier Tauchclub Obwalden]]></text>
-			</staticText>
-			<image>
-				<reportElement x="1" y="25" width="152" height="50" uuid="0c8d5df4-9f73-4217-a50e-cd79f9c371a2"/>
-				<imageExpression><![CDATA["SignaturPatrick.jpg"]]></imageExpression>
-			</image>
+			</element>
+			<element kind="image" uuid="0c8d5df4-9f73-4217-a50e-cd79f9c371a2" x="1" y="25" width="152" height="50">
+				<expression><![CDATA["SignaturPatrick.jpg"]]></expression>
+			</element>
 		</band>
 	</detail>
-	<lastPageFooter>
-		<band height="297">
-			<image>
-				<reportElement x="-85" y="-1" width="595" height="297" uuid="0b50496f-f261-4a8b-b57e-eca2365a8b0d"/>
-				<imageExpression><![CDATA[$F{QrInvoice}]]></imageExpression>
-			</image>
-			<textField>
-				<reportElement x="60" y="220" width="420" height="40" forecolor="#001BA1" uuid="7828cf1b-4ac4-468f-9a93-78c05948468c">
-					<printWhenExpression><![CDATA[$F{Bezahlt} != null]]></printWhenExpression>
-				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Bottom">
-					<font fontName="DejaVu Sans" size="11"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Betrag bereits erhalten am " + DATEFORMAT($F{Bezahlt},"dd. MMMM yyyy") + "\nVielen Dank" ]]></textFieldExpression>
-			</textField>
-		</band>
+	<lastPageFooter height="297">
+		<element kind="image" uuid="0b50496f-f261-4a8b-b57e-eca2365a8b0d" x="-85" y="-1" width="595" height="297">
+			<expression><![CDATA[$F{QrInvoice}]]></expression>
+		</element>
+		<element kind="textField" uuid="7828cf1b-4ac4-468f-9a93-78c05948468c" x="60" y="220" width="420" height="40" forecolor="#001BA1" fontName="DejaVu Sans" fontSize="11.0" hTextAlign="Right" vTextAlign="Bottom">
+			<printWhenExpression><![CDATA[$F{Bezahlt} != null]]></printWhenExpression>
+			<expression><![CDATA["Betrag bereits erhalten am " + DATEFORMAT($F{Bezahlt},"dd. MMMM yyyy") + "\nVielen Dank"]]></expression>
+		</element>
 	</lastPageFooter>
 </jasperReport>

@@ -1,8 +1,7 @@
 package net.reini.tcow;
 
-import static java.nio.file.Files.exists;
 import static java.nio.file.Files.write;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,7 +39,7 @@ class BillingTest {
 
     row.put("QrInvoice", Base64.getEncoder().encodeToString(billing.createQrInvoice(row)));
     billing.createPdf(pdfFile, row);
-    assertTrue(exists(pdfFile));
+    assertThat(pdfFile).exists();
   }
 
   @Test
@@ -50,7 +49,7 @@ class BillingTest {
 
     row.put("QrInvoice", Base64.getEncoder().encodeToString(billing.createQrInvoice(row)));
     billing.createPdf(pdfFile, row);
-    assertTrue(exists(pdfFile));
+    assertThat(pdfFile).exists();
   }
 
   @Test
@@ -60,7 +59,7 @@ class BillingTest {
 
     byte[] data = billing.createQrInvoice(row);
     write(pdfFile, data);
-    assertTrue(exists(pdfFile));
+    assertThat(pdfFile).exists();
   }
 
   private Map<String, Object> rowData(String typ) {
