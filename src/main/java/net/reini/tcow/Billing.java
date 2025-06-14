@@ -1,6 +1,7 @@
 package net.reini.tcow;
 
 import static java.lang.String.format;
+import static java.lang.System.getProperty;
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
@@ -105,8 +106,10 @@ public class Billing implements AutoCloseable {
     dateFormatter = ofPattern("dd.MM.yyyy", Locale.GERMAN);
     yearFormatter = ofPattern("yyyy", Locale.GERMAN);
     replacementPattern = Pattern.compile("\\$\\{([\\w]+)}");
-    creditorProperties = loadProperties(Paths.get("creditor.properties"));
-    mailProperties = loadProperties(Paths.get("mail.properties"));
+    final Path userDir = Path.of(getProperty("user.dir"));
+    final Path userHome = Path.of(getProperty("user.home"));
+    creditorProperties = loadProperties("creditor.properties", dataDir, userHome, userDir);
+    mailProperties = loadProperties("mail.properties", dataDir, userHome, userDir);
     sender = new InternetAddress(creditorProperties.getProperty("senderAddress"),
         creditorProperties.getProperty("senderName"));
     mailSession = Session.getDefaultInstance(mailProperties);
@@ -139,17 +142,22 @@ public class Billing implements AutoCloseable {
     }
   }
 
-  static Properties loadProperties(Path propertiesFile) {
+  static Properties loadProperties(final String propertyFileName,  final Path... propertiesDirs) {
     final Properties properties = new Properties();
-    if (exists(propertiesFile)) {
-      try (InputStream in = newInputStream(propertiesFile)) {
-        properties.load(in);
-      } catch (IOException e) {
-        LOGGER.info("{} failed to read. Using defaults.", propertiesFile, e);
+    for (Path propertyDir : propertiesDirs) {
+      final Path propertiesFile = propertyDir.resolve(propertyFileName);
+      LOGGER.debug("Looking for {}", propertiesFile);
+      if (exists(propertiesFile)) {
+        try (InputStream in = newInputStream(propertiesFile)) {
+          LOGGER.info("Loading {}...", propertiesFile);
+          properties.load(in);
+          return properties;
+        } catch (IOException e) {
+          LOGGER.error("Failed to read {}", propertiesFile, e);
+        }
       }
-    } else {
-      LOGGER.info("{} not available. Using defaults.", propertiesFile);
     }
+    LOGGER.info("No property file {} found, using defaults", propertyFileName);
     return properties;
   }
 
@@ -186,13 +194,13 @@ public class Billing implements AutoCloseable {
 
   void addToPrint(Path pdfFile) throws IOException {
     try (InputStream in = newInputStream(pdfFile);
-         PdfReader pdfReader = new PdfReader(in);
-         OutputStream out = newOutputStream(dataDir.resolve(INVOICE + "enToPrint.pdf"))) {
+         PdfReader pdfReader = new PdfReader(in)) {
       if (pdfConcatenated == null) {
         pdfConcatenated = new Document();
       }
       if (pdfCopy == null) {
-        pdfCopy = new PdfCopy(pdfConcatenated, out);
+        pdfCopy = new PdfCopy(pdfConcatenated,
+            newOutputStream(dataDir.resolve("RechnungenToPrint.pdf")));
       }
       pdfConcatenated.open();
       for (int pagetIndex = 1,
