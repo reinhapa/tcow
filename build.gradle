@@ -1,23 +1,30 @@
 plugins {
     id 'java'
+    id 'eclipse'
     id 'application'
-    id 'com.github.ben-manes.versions' version '0.51.0'
-    id 'net.nemerosa.versioning' version '3.1.0'
-    id 'org.owasp.dependencycheck' version '9.0.9'
-}
-
-
-java {
-  sourceCompatibility = JavaVersion.VERSION_21
-}
-
-repositories {
-    mavenCentral()
-    mavenLocal()
+    alias libs.plugins.ben.manes.versions
+    alias libs.plugins.nemerosa.versioning
+    alias libs.plugins.owasp.dependencycheck
+    alias libs.plugins.sonarqube
 }
 
 application {
     mainClass = 'net.reini.tcow.Billing'
+}
+
+repositories {
+    mavenCentral()
+}
+
+eclipse {
+  classpath.downloadSources = true
+  jdt.javaRuntimeName = 'JavaSE-21'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+//    withJavadocJar()
+//    withSourcesJar()
 }
 
 test {
@@ -25,24 +32,25 @@ test {
 }
 
 dependencies {
-    implementation 'bouncycastle:bcprov-jdk14:140'
-    implementation 'ch.codeblock.qrinvoice.core:qrinvoice-core:1.19'
-    implementation 'ch.codeblock.qrinvoice.openpdf:qrinvoice-openpdf:1.19'
-    implementation 'com.github.librepdf:openpdf:2.0.1'
-    implementation 'jakarta.mail:jakarta.mail-api:2.1.3'
-    implementation 'net.sf.jasperreports:jasperreports:6.21.2'
-    implementation 'net.sf.jasperreports:jasperreports-functions:6.21.2'
-//    implementation 'net.sf.jasperreports:jasperreports-metadata:6.21.2'
-    implementation 'org.odftoolkit:odfdom-java:0.12.0'
-    implementation 'org.slf4j:slf4j-api:2.0.12'
+    implementation libs.jakarta.mail.api
+    implementation libs.jasper.reports
+    implementation libs.jasper.reports.functions
+    implementation libs.jasper.reports.jdt
+    implementation libs.jasper.reports.pdf
+    implementation libs.odfdom.java
+    implementation libs.openpdf
+    implementation libs.qrinvoice.core
+    implementation libs.qrinvoice.openpdf
+    implementation libs.slf4j.api
 
-    runtimeOnly 'ch.qos.logback:logback-classic:1.5.3'
-    runtimeOnly 'ch.qos.logback:logback-core:1.5.3'
-    runtimeOnly 'org.eclipse.angus:jakarta.mail:2.0.3'
+    runtimeOnly libs.jakarta.angus.mail
+    runtimeOnly libs.logback.classic
+    runtimeOnly libs.logback.core
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
-    testRuntimeOnly 'org.junit.platform:junit-platform-runner:1.10.2'
+    testImplementation libs.assertj.core
+    testImplementation libs.junit.jupiter.api
+    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.junit.platform.runner
 }
 
 dependencyUpdates.resolutionStrategy {

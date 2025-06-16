@@ -1,9 +1,10 @@
-.classpath
-.settings
-.gradle
-.project
-bin
-build
 *.odt
 *.pdf
 *.properties
+.classpath
+.gradle
+.idea
+.project
+.settings
+bin
+build
