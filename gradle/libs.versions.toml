@@ -8,7 +8,7 @@ junit-jupiter = '5.13.1'
 junit-platform-runner = '1.13.1'
 logback = '1.5.18'
 odftoolkit = '0.12.0'
-openpdf = '2.0.5'
+openpdf = '2.2.2'
 qrinvoice = '1.20'
 slf4j = '2.0.17'
 
