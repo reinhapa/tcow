@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        jdk: ['17', '20']
+        jdk: ['21']
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
 #    - name: SonarQube
-#      if:  ${{ matrix.jdk == '17' }}
+#      if:  ${{ matrix.jdk == '21' }}
 #      env:
 #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
 #      run: ./gradlew sonarqube -PsonarToken=${{ secrets.SONAR_TOKEN }}
@@ -45,7 +45,7 @@ jobs:
 #      uses: actions/setup-java@v4
 #      with:
 #        distribution: temurin
-#        java-version: '17'
+#        java-version: '21'
 #    - name: Deploy
 #      env:
 #        ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_SIGNING_KEY }}
