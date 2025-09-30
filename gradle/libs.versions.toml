@@ -1,5 +1,5 @@
 [versions]
-angus-mail = '2.0.4'
+angus-mail = '2.0.5'
 assertj-core = '3.27.6'
 bouncycastle = '1.82'
 jakarta-mail-api = '2.1.5'
