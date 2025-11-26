@@ -1,7 +1,7 @@
 [versions]
 angus-mail = '2.0.5'
 assertj-core = '3.27.6'
-bouncycastle = '1.82'
+bouncycastle = '1.83'
 jakarta-mail-api = '2.1.5'
 jasper-reports = '7.0.3'
 junit-jupiter = '6.0.1'
