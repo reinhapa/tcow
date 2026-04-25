@@ -35,5 +35,5 @@ slf4j-api = { module = 'org.slf4j:slf4j-api', version.ref = 'slf4j' }
 
 [plugins]
 ben-manes-versions = { id = 'com.github.ben-manes.versions', version = '0.54.0' }
-nemerosa-versioning = { id = 'net.nemerosa.versioning', version = '3.1.0' }
+nemerosa-versioning = { id = 'net.nemerosa.versioning', version = '4.0.1' }
 owasp-dependencycheck = { id = 'org.owasp.dependencycheck', version = '12.2.1' }
