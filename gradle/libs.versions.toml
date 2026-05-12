@@ -10,7 +10,7 @@ logback = '1.5.32'
 odftoolkit = '0.13.0'
 openpdf = '2.4.0'
 qrinvoice = '1.23'
-slf4j = '2.0.17'
+slf4j = '2.0.18'
 
 [libraries]
 angus-mail = { module = 'org.eclipse.angus:jakarta.mail', version.ref = 'angus-mail' }
