@@ -9,7 +9,7 @@ junit-platform-runner = '1.14.4'
 logback = '1.6.4'
 odftoolkit = '0.13.0'
 openpdf = '2.4.0'
-qrinvoice = '1.23'
+qrinvoice = '1.24'
 slf4j = '2.0.20'
 
 [libraries]
